@@ -4,6 +4,10 @@ import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
+// Unterpfad fuer GitHub Pages (Projekt-Repo). Im CI-Build via BASE_PATH gesetzt,
+// lokal (npm run dev) bleibt es leer -> laeuft unter http://localhost:5173/.
+const base = process.env.BASE_PATH || '';
+
 export default defineConfig({
 	plugins: [
 		sveltekit({
@@ -13,7 +17,8 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			// SPA-Modus fuer GitHub Pages: alle Routen laufen ueber index.html (Client-Rendering).
-			adapter: adapter({ fallback: 'index.html' })
+			adapter: adapter({ fallback: 'index.html' }),
+			paths: { base }
 		}),
 		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })
 	],

@@ -24,6 +24,8 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run build
+        env:
+          BASE_PATH: /Tiny-Toyko-Tracker
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build
