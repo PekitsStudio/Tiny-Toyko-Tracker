@@ -4,7 +4,7 @@
   import { AdapterCardsRepo } from '$lib/repositories/cards.repo';
   import { SearchService, type Facets, type PokeHit } from '$lib/services/search.service';
   import { getRecent, recordRecent } from '$lib/recent';
-  import { flagFor, langLabel } from '$lib/format';
+  import { langLabel } from '$lib/format';
   import { addCard, addWishlist } from '$lib/services/collection.service';
   import type { Game, SearchCard, SearchFilters, SearchMode } from '$lib/types';
 
@@ -156,7 +156,7 @@
 
   <div class="sh-secondary">
     <select bind:value={lang} title="Sprache">
-      {#each LANGS as l}<option value={l}>{l ? `${flagFor(l)} ${langLabel(l)}` : 'Sprache (auto)'}</option>{/each}
+      {#each LANGS as l}<option value={l}>{l ? langLabel(l) : 'Sprache (auto)'}</option>{/each}
     </select>
     <select bind:value={mode} title="Suche nach Name oder Kartennummer">
       <option value="name">nach Name</option>
@@ -188,7 +188,7 @@
     {#if facets.langs.length > 1}
       <span><span class="flabel">Sprache</span>
         <select bind:value={filters.lang}><option value="">alle</option>
-          {#each facets.langs as l}<option value={l}>{flagFor(l)} {langLabel(l)}</option>{/each}</select></span>
+          {#each facets.langs as l}<option value={l}>{langLabel(l)}</option>{/each}</select></span>
     {/if}
     <span><label style="cursor:pointer"><input type="checkbox" bind:checked={filters.priceOnly} style="width:auto" /><span> nur mit Preis</span></label></span>
     <span><span class="flabel">Sortieren</span>

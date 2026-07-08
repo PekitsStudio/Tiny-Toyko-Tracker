@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { GAME_LABEL, flagFor, fmt, refText, extraLine } from '$lib/format';
+  import { GAME_LABEL, fmt, refText, extraLine } from '$lib/format';
+  import Flag from '$lib/components/Flag.svelte';
   import type { SearchCard } from '$lib/types';
 
   let { cards = [], onadd, onquick, onwish, ondetail }:
@@ -31,7 +32,7 @@
       {/if}
       <div class="meta">
         <div class="name">{c.name}</div>
-        <div class="set"><span class="flag">{flagFor(c.lang)}</span>{c.setName || ''}</div>
+        <div class="set"><Flag lang={c.lang} />{c.setName || ''}</div>
         {#if refText(c)}<div class="ref"><b>{refText(c)}</b></div>{/if}
         {#if c.rarity}<div class="rarity">{c.rarity}</div>{/if}
         {#if extraLine(c)}<div class="extra">{extraLine(c)}</div>{/if}
