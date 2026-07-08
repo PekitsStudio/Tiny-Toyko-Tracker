@@ -4,6 +4,7 @@
   import Collection from '$lib/features/collection/Collection.svelte';
   import Wishlist from '$lib/features/wishlist/Wishlist.svelte';
   import Market from '$lib/features/market/Market.svelte';
+  import Trades from '$lib/features/trades/Trades.svelte';
   import Sold from '$lib/features/sold/Sold.svelte';
   import Profile from '$lib/features/profile/Profile.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
@@ -17,6 +18,7 @@
   <button class:active={nav.tab === 'sammlung'} onclick={() => nav.go('sammlung')}>Sammlung</button>
   <button class:active={nav.tab === 'wunschliste'} onclick={() => nav.go('wunschliste')}>Wunschliste</button>
   <button class:active={nav.tab === 'marktplatz'} onclick={() => nav.go('marktplatz')}>Marktplatz</button>
+  <button class:active={nav.tab === 'handel'} onclick={() => nav.go('handel')}>Handel</button>
   <button class:active={nav.tab === 'verkauft'} onclick={() => nav.go('verkauft')}>Verkauft</button>
   <button class:active={nav.tab === 'profil'} onclick={() => nav.go('profil')}>Profil</button>
 </nav>
@@ -27,6 +29,7 @@
   {:else if nav.tab === 'sammlung'}<Collection />
   {:else if nav.tab === 'wunschliste'}<Wishlist />
   {:else if nav.tab === 'marktplatz'}<Market />
+  {:else if nav.tab === 'handel'}<Trades />
   {:else if nav.tab === 'verkauft'}<Sold />
   {:else}<Profile />{/if}
 </main>

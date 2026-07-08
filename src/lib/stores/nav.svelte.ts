@@ -1,4 +1,4 @@
-export type Tab = 'start' | 'suche' | 'sammlung' | 'wunschliste' | 'marktplatz' | 'verkauft' | 'profil';
+export type Tab = 'start' | 'suche' | 'sammlung' | 'wunschliste' | 'marktplatz' | 'handel' | 'verkauft' | 'profil';
 class NavStore {
 	tab = $state<Tab>('start');
 	go(t: Tab) { this.tab = t; }
