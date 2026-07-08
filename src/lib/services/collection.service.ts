@@ -83,3 +83,32 @@ export async function addWishlist(c: SearchCard) {
 	};
 	return must(await supabase().from('wishlist').insert(row).select().single());
 }
+
+// --- Sammlung anzeigen ---
+export interface CollectionCard {
+	id: number;
+	game: string;
+	name: string;
+	set_name: string | null;
+	number: string | null;
+	rarity: string | null;
+	image_url: string | null;
+	quantity: number;
+	condition: string | null;
+	language: string | null;
+	price_current: number | null;
+	currency: string | null;
+}
+
+export async function listCards(): Promise<CollectionCard[]> {
+	await currentUserId(); // wirft "Nicht eingeloggt", wenn keine Session
+	return must(
+		await supabase()
+			.from('cards')
+			.select(
+				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency'
+			)
+			.eq('status', 'owned')
+			.order('added_at', { ascending: false })
+	);
+}
