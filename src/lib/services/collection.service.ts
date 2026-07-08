@@ -112,3 +112,17 @@ export async function listCards(): Promise<CollectionCard[]> {
 			.order('added_at', { ascending: false })
 	);
 }
+
+export async function deleteCard(id: number): Promise<void> {
+	await currentUserId();
+	await supabase().from('card_price_history').delete().eq('card_id', id);
+	const { error } = await supabase().from('cards').delete().eq('id', id);
+	if (error) throw new Error(error.message);
+}
+
+export async function setCardQuantity(id: number, quantity: number): Promise<void> {
+	await currentUserId();
+	const q = Math.max(1, Math.floor(quantity));
+	const { error } = await supabase().from('cards').update({ quantity: q }).eq('id', id);
+	if (error) throw new Error(error.message);
+}
