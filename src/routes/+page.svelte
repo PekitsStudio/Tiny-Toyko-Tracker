@@ -3,9 +3,11 @@
   import Search from '$lib/features/search/Search.svelte';
   import Collection from '$lib/features/collection/Collection.svelte';
   import Wishlist from '$lib/features/wishlist/Wishlist.svelte';
+  import Showcases from '$lib/features/showcase/Showcases.svelte';
   import Market from '$lib/features/market/Market.svelte';
   import Trades from '$lib/features/trades/Trades.svelte';
   import Sold from '$lib/features/sold/Sold.svelte';
+  import Extras from '$lib/features/extras/Extras.svelte';
   import Profile from '$lib/features/profile/Profile.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
   import PublicProfile from '$lib/components/PublicProfile.svelte';
@@ -17,9 +19,11 @@
   <button class:active={nav.tab === 'suche'} onclick={() => nav.go('suche')}>Suche</button>
   <button class:active={nav.tab === 'sammlung'} onclick={() => nav.go('sammlung')}>Sammlung</button>
   <button class:active={nav.tab === 'wunschliste'} onclick={() => nav.go('wunschliste')}>Wunschliste</button>
+  <button class:active={nav.tab === 'showcases'} onclick={() => nav.go('showcases')}>Showcases</button>
   <button class:active={nav.tab === 'marktplatz'} onclick={() => nav.go('marktplatz')}>Marktplatz</button>
   <button class:active={nav.tab === 'handel'} onclick={() => nav.go('handel')}>Handel</button>
   <button class:active={nav.tab === 'verkauft'} onclick={() => nav.go('verkauft')}>Verkauft</button>
+  <button class:active={nav.tab === 'extras'} onclick={() => nav.go('extras')}>Sealed/Graded</button>
   <button class:active={nav.tab === 'profil'} onclick={() => nav.go('profil')}>Profil</button>
 </nav>
 
@@ -28,9 +32,11 @@
   {:else if nav.tab === 'suche'}<Search />
   {:else if nav.tab === 'sammlung'}<Collection />
   {:else if nav.tab === 'wunschliste'}<Wishlist />
+  {:else if nav.tab === 'showcases'}<Showcases />
   {:else if nav.tab === 'marktplatz'}<Market />
   {:else if nav.tab === 'handel'}<Trades />
   {:else if nav.tab === 'verkauft'}<Sold />
+  {:else if nav.tab === 'extras'}<Extras />
   {:else}<Profile />{/if}
 </main>
 
@@ -39,7 +45,7 @@
 
 <style>
   .tabs { display: flex; gap: 6px; max-width: 1100px; margin: 16px auto 0; padding: 0 16px; flex-wrap: wrap; }
-  .tabs button { padding: 9px 18px; border-radius: 999px; border: 1px solid #2a2f3a; background: transparent; color: inherit; font-weight: 600; cursor: pointer; }
+  .tabs button { padding: 9px 16px; border-radius: 999px; border: 1px solid #2a2f3a; background: transparent; color: inherit; font-weight: 600; cursor: pointer; }
   .tabs button.active { background: var(--accent, #6366f1); border-color: transparent; color: #fff; }
   main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 60px; }
 </style>
