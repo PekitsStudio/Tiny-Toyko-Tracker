@@ -1,7 +1,7 @@
 <script lang="ts">
   import { detail } from '$lib/stores/detail.svelte';
   import { fmt, GAME_LABEL } from '$lib/format';
-  import { updateCard } from '$lib/services/collection.service';
+  import { updateCard, sellCard } from '$lib/services/collection.service';
   import { setForSale, setSeeking } from '$lib/services/market.service';
   import Flag from './Flag.svelte';
 
@@ -9,9 +9,12 @@
   const CONDITIONS = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO'];
   const LANGS = ['DE', 'EN', 'FR', 'IT', 'ES', 'PT', 'NL', 'PL', 'RU', 'JA', 'KO'];
 
-  let ed = $state({ condition: 'NM', language: 'DE', quantity: 1, notes: '' });
+  let ed = $state<{ condition: string; language: string; quantity: number; notes: string; purchasePrice: number | null; purchaseDate: string }>(
+    { condition: 'NM', language: 'DE', quantity: 1, notes: '', purchasePrice: null, purchaseDate: '' }
+  );
   let sale = $state<{ forSale: boolean; askingPrice: number | null }>({ forSale: false, askingPrice: null });
   let seek = $state<{ seeking: boolean; maxPrice: number | null }>({ seeking: false, maxPrice: null });
+  let soldPrice = $state<number | null>(null);
   let saving = $state(false);
   let savedMsg = $state('');
 
@@ -19,8 +22,12 @@
     const cc = detail.card;
     savedMsg = '';
     if (cc?.cardId) {
-      ed = { condition: cc.condition ?? 'NM', language: (cc.lang ?? 'DE').toUpperCase(), quantity: cc.quantity ?? 1, notes: cc.notes ?? '' };
+      ed = {
+        condition: cc.condition ?? 'NM', language: (cc.lang ?? 'DE').toUpperCase(), quantity: cc.quantity ?? 1,
+        notes: cc.notes ?? '', purchasePrice: cc.purchasePrice ?? null, purchaseDate: cc.purchaseDate ?? ''
+      };
       sale = { forSale: !!cc.forSale, askingPrice: cc.askingPrice ?? null };
+      soldPrice = cc.askingPrice ?? cc.price ?? null;
     }
     if (cc?.wishlistId) {
       seek = { seeking: !!cc.seeking, maxPrice: cc.seekMaxPrice ?? null };
@@ -34,10 +41,25 @@
     if (!c?.cardId) return;
     saving = true;
     try {
-      await updateCard(c.cardId, { condition: ed.condition, language: ed.language, quantity: Math.max(1, Math.floor(ed.quantity)), notes: ed.notes ? ed.notes : null });
+      await updateCard(c.cardId, {
+        condition: ed.condition, language: ed.language, quantity: Math.max(1, Math.floor(ed.quantity)),
+        notes: ed.notes ? ed.notes : null,
+        purchase_price: ed.purchasePrice, purchase_date: ed.purchaseDate ? ed.purchaseDate : null
+      });
       await setForSale(c.cardId, sale.forSale, sale.forSale ? (sale.askingPrice ?? null) : null);
       detail.markSaved();
       savedMsg = 'Gespeichert ✓';
+    } catch (e) { savedMsg = (e as Error).message; } finally { saving = false; }
+  }
+
+  async function sellNow() {
+    if (!c?.cardId) return;
+    if (!confirm(`„${c.name}" als verkauft markieren? Sie wandert in den Reiter „Verkauft".`)) return;
+    saving = true;
+    try {
+      await sellCard(c.cardId, soldPrice ?? null);
+      detail.markSaved();
+      close();
     } catch (e) { savedMsg = (e as Error).message; } finally { saving = false; }
   }
 
@@ -81,7 +103,11 @@
                 <label>Zustand<select bind:value={ed.condition}>{#each CONDITIONS as x}<option>{x}</option>{/each}</select></label>
                 <label>Sprache<select bind:value={ed.language}>{#each langOptions as x}<option>{x}</option>{/each}</select></label>
               </div>
-              <div class="row2"><label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label></div>
+              <div class="row2">
+                <label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label>
+                <label>Kaufpreis<input type="number" min="0" step="0.01" bind:value={ed.purchasePrice} /></label>
+                <label>Kaufdatum<input type="date" bind:value={ed.purchaseDate} /></label>
+              </div>
               <label>Notiz<textarea rows="2" bind:value={ed.notes}></textarea></label>
               <div class="sale">
                 <label class="chk"><input type="checkbox" bind:checked={sale.forSale} /> Zum Verkauf anbieten</label>
@@ -91,12 +117,16 @@
                 <button class="save" onclick={saveCard} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
                 {#if savedMsg}<span class="saved">{savedMsg}</span>{/if}
               </div>
+              <div class="sell">
+                <label>Verkaufspreis<input type="number" min="0" step="0.01" bind:value={soldPrice} /></label>
+                <button class="sellbtn" onclick={sellNow} disabled={saving}>Als verkauft markieren</button>
+              </div>
             </div>
           {:else if c.wishlistId}
             <div class="edit">
               <h3>Öffentlich suchen</h3>
               <label class="chk"><input type="checkbox" bind:checked={seek.seeking} /> Diese Karte im Marktplatz suchen</label>
-              {#if seek.seeking}<label>Höchstpreis<input type="number" min="0" step="0.01" placeholder="z. B. 3.00" bind:value={seek.maxPrice} /></label>{/if}
+              {#if seek.seeking}<label>Höchstpreis<input type="number" min="0" step="0.01" bind:value={seek.maxPrice} /></label>{/if}
               <div class="saverow">
                 <button class="save" onclick={saveSeek} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
                 {#if savedMsg}<span class="saved">{savedMsg}</span>{/if}
@@ -124,7 +154,7 @@
   .edit { margin-top: 12px; border-top: 1px solid #2a2f3a; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
   .edit h3 { margin: 0 0 2px; font-size: 1rem; }
   .edit label { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; color: var(--muted); flex: 1; }
-  .row2 { display: flex; gap: 10px; }
+  .row2 { display: flex; gap: 10px; flex-wrap: wrap; }
   .edit select, .edit input, .edit textarea { padding: 7px 9px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .sale { border-top: 1px dashed #2a2f3a; padding-top: 8px; margin-top: 2px; display: flex; flex-direction: column; gap: 8px; }
   .chk { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
@@ -132,4 +162,6 @@
   .saverow { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .save { padding: 8px 16px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
   .saved { color: #86efac; font-size: 0.85rem; }
+  .sell { border-top: 1px dashed #2a2f3a; padding-top: 10px; margin-top: 6px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .sellbtn { padding: 8px 14px; border-radius: 8px; border: 1px solid #3a2a16; background: transparent; color: #f5c451; cursor: pointer; font-weight: 600; }
 </style>

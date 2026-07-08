@@ -18,6 +18,8 @@ export interface DetailCard {
 	notes?: string | null;
 	forSale?: boolean | null;
 	askingPrice?: number | null;
+	purchasePrice?: number | null;
+	purchaseDate?: string | null;
 	wishlistId?: number; // Wunschlisten-Karte -> oeffentlich suchen
 	seeking?: boolean | null;
 	seekMaxPrice?: number | null;

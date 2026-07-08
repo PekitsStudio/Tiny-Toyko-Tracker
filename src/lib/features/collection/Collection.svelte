@@ -49,7 +49,7 @@
     detail.open({
       game: c.game, name: c.name, imageUrl: c.image_url, setName: c.set_name, number: c.number,
       rarity: c.rarity, lang: c.language, price: c.price_current, currency: c.currency,
-      condition: c.condition, quantity: c.quantity, cardId: c.id, notes: c.notes, forSale: c.for_sale, askingPrice: c.asking_price
+      condition: c.condition, quantity: c.quantity, cardId: c.id, notes: c.notes, forSale: c.for_sale, askingPrice: c.asking_price, purchasePrice: c.purchase_price, purchaseDate: c.purchase_date
     });
   }
 </script>

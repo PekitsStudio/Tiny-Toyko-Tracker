@@ -107,6 +107,8 @@ export interface CollectionCard {
 	notes: string | null;
 	for_sale: boolean | null;
 	asking_price: number | null;
+	purchase_price: number | null;
+	purchase_date: string | null;
 }
 
 export async function listCards(): Promise<CollectionCard[]> {
@@ -115,7 +117,7 @@ export async function listCards(): Promise<CollectionCard[]> {
 		await supabase()
 			.from('cards')
 			.select(
-				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency, notes, for_sale, asking_price'
+				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency, notes, for_sale, asking_price, purchase_price, purchase_date'
 			)
 			.eq('status', 'owned')
 			.order('added_at', { ascending: false })
@@ -137,7 +139,7 @@ export async function setCardQuantity(id: number, quantity: number): Promise<voi
 }
 
 // Beliebige erlaubte Felder einer Sammlungskarte aendern (Zustand, Sprache, Menge, Notiz).
-const CARD_EDITABLE = ['quantity', 'condition', 'language', 'notes'] as const;
+const CARD_EDITABLE = ['quantity', 'condition', 'language', 'notes', 'purchase_price', 'purchase_date', 'sold_price'] as const;
 export type CardPatch = Partial<Record<(typeof CARD_EDITABLE)[number], string | number | null>>;
 
 export async function updateCard(id: number, fields: CardPatch): Promise<void> {
@@ -228,4 +230,55 @@ export async function refreshCollectionPrices(
 
 	await Promise.all(Array.from({ length: Math.min(CONCURRENCY, rows.length) }, worker));
 	return { updated, total: rows.length };
+}
+
+// --- Verkauft ---
+export interface SoldCard {
+	id: number;
+	game: string;
+	name: string;
+	set_name: string | null;
+	number: string | null;
+	rarity: string | null;
+	image_url: string | null;
+	language: string | null;
+	quantity: number;
+	currency: string | null;
+	purchase_price: number | null;
+	sold_price: number | null;
+	sold_date: string | null;
+}
+
+export async function listSold(): Promise<SoldCard[]> {
+	await currentUserId();
+	return must(
+		await supabase()
+			.from('cards')
+			.select(
+				'id, game, name, set_name, number, rarity, image_url, language, quantity, currency, purchase_price, sold_price, sold_date'
+			)
+			.eq('status', 'sold')
+			.order('sold_date', { ascending: false, nullsFirst: false })
+	);
+}
+
+// Karte als verkauft markieren (raus aus der aktiven Sammlung).
+export async function sellCard(id: number, soldPrice: number | null, soldDate?: string): Promise<void> {
+	await currentUserId();
+	const day = soldDate || new Date().toISOString().slice(0, 10);
+	const { error } = await supabase()
+		.from('cards')
+		.update({ status: 'sold', sold_price: soldPrice, sold_date: day, for_sale: false, asking_price: null })
+		.eq('id', id);
+	if (error) throw new Error(error.message);
+}
+
+// Verkauf rueckgaengig machen -> zurueck in die Sammlung.
+export async function unsellCard(id: number): Promise<void> {
+	await currentUserId();
+	const { error } = await supabase()
+		.from('cards')
+		.update({ status: 'owned', sold_price: null, sold_date: null })
+		.eq('id', id);
+	if (error) throw new Error(error.message);
 }
