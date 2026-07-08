@@ -28,7 +28,6 @@ export async function getMyProfile(): Promise<Profile> {
 	}) as Profile;
 }
 
-// Anzeigename ist gesperrt und wird bewusst NICHT geaendert.
 export type ProfilePatch = { country?: string | null; contact?: string | null; bio?: string | null; fav_games?: string | null; collector_type?: string | null };
 
 export async function updateMyProfile(fields: ProfilePatch): Promise<void> {
@@ -39,4 +38,34 @@ export async function updateMyProfile(fields: ProfilePatch): Promise<void> {
 	}
 	const { error } = await supabase().from('user_settings').upsert(row, { onConflict: 'user_id' });
 	if (error) throw new Error(error.message);
+}
+
+// Oeffentliches Profil (aus der profiles-View).
+export interface PublicProfile {
+	user_id: string;
+	name: string | null;
+	country: string | null;
+	contact: string | null;
+	bio: string | null;
+	fav_games: string | null;
+	collector_type: string | null;
+	points: number | null;
+	rank: number | null;
+	badges: string[] | null;
+	rating_avg: number | null;
+	rating_count: number | null;
+	active_offers: number | null;
+	sold_count: number | null;
+	total_cards: number | null;
+	member_since: string | null;
+}
+
+export async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
+	const { data, error } = await supabase()
+		.from('profiles')
+		.select('user_id, name, country, contact, bio, fav_games, collector_type, points, rank, badges, rating_avg, rating_count, active_offers, sold_count, total_cards, member_since')
+		.eq('user_id', userId)
+		.maybeSingle();
+	if (error) throw new Error(error.message);
+	return (data ?? null) as PublicProfile | null;
 }

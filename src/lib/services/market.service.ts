@@ -6,7 +6,6 @@ async function requireUser(): Promise<string> {
 	return data.user.id;
 }
 
-// --- Angebote (market_cards) ---
 export interface MarketCard {
 	id: number;
 	game: string;
@@ -25,6 +24,8 @@ export interface MarketCard {
 	price_current: number | null;
 	seller_name: string | null;
 	seller_contact: string | null;
+	seller_country: string | null;
+	seller_id: string;
 	is_mine: boolean;
 }
 
@@ -39,11 +40,17 @@ export async function listMarket(opts: { game?: string; q?: string } = {}): Prom
 	return (data ?? []) as MarketCard[];
 }
 
-export async function setForSale(
-	cardId: number,
-	forSale: boolean,
-	askingPrice: number | null
-): Promise<void> {
+export async function listMarketBySeller(sellerId: string): Promise<MarketCard[]> {
+	const { data, error } = await supabase()
+		.from('market_cards')
+		.select('*')
+		.eq('seller_id', sellerId)
+		.order('asking_price', { ascending: true, nullsFirst: false });
+	if (error) throw new Error(error.message);
+	return (data ?? []) as MarketCard[];
+}
+
+export async function setForSale(cardId: number, forSale: boolean, askingPrice: number | null): Promise<void> {
 	await requireUser();
 	const { error } = await supabase()
 		.from('cards')
@@ -52,7 +59,6 @@ export async function setForSale(
 	if (error) throw new Error(error.message);
 }
 
-// --- Gesuche / "Suche" (seeking_cards) ---
 export interface SeekingCard {
 	id: number;
 	game: string;
@@ -70,6 +76,7 @@ export interface SeekingCard {
 	seeker_name: string | null;
 	seeker_contact: string | null;
 	seeker_country: string | null;
+	seeker_id: string;
 	is_mine: boolean;
 }
 
@@ -82,12 +89,7 @@ export async function listSeeking(opts: { game?: string; q?: string } = {}): Pro
 	return (data ?? []) as SeekingCard[];
 }
 
-// Eigene Wunschlisten-Karte oeffentlich suchen / zurueckziehen.
-export async function setSeeking(
-	wishlistId: number,
-	seeking: boolean,
-	maxPrice: number | null
-): Promise<void> {
+export async function setSeeking(wishlistId: number, seeking: boolean, maxPrice: number | null): Promise<void> {
 	await requireUser();
 	const { error } = await supabase()
 		.from('wishlist')

@@ -1,31 +1,35 @@
 <script lang="ts">
+  import Dashboard from '$lib/features/dashboard/Dashboard.svelte';
   import Search from '$lib/features/search/Search.svelte';
   import Collection from '$lib/features/collection/Collection.svelte';
   import Wishlist from '$lib/features/wishlist/Wishlist.svelte';
   import Market from '$lib/features/market/Market.svelte';
   import Profile from '$lib/features/profile/Profile.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
-
-  let tab = $state<'suche' | 'sammlung' | 'wunschliste' | 'marktplatz' | 'profil'>('suche');
+  import PublicProfile from '$lib/components/PublicProfile.svelte';
+  import { nav } from '$lib/stores/nav.svelte';
 </script>
 
 <nav class="tabs">
-  <button class:active={tab === 'suche'} onclick={() => (tab = 'suche')}>Suche</button>
-  <button class:active={tab === 'sammlung'} onclick={() => (tab = 'sammlung')}>Sammlung</button>
-  <button class:active={tab === 'wunschliste'} onclick={() => (tab = 'wunschliste')}>Wunschliste</button>
-  <button class:active={tab === 'marktplatz'} onclick={() => (tab = 'marktplatz')}>Marktplatz</button>
-  <button class:active={tab === 'profil'} onclick={() => (tab = 'profil')}>Profil</button>
+  <button class:active={nav.tab === 'start'} onclick={() => nav.go('start')}>Start</button>
+  <button class:active={nav.tab === 'suche'} onclick={() => nav.go('suche')}>Suche</button>
+  <button class:active={nav.tab === 'sammlung'} onclick={() => nav.go('sammlung')}>Sammlung</button>
+  <button class:active={nav.tab === 'wunschliste'} onclick={() => nav.go('wunschliste')}>Wunschliste</button>
+  <button class:active={nav.tab === 'marktplatz'} onclick={() => nav.go('marktplatz')}>Marktplatz</button>
+  <button class:active={nav.tab === 'profil'} onclick={() => nav.go('profil')}>Profil</button>
 </nav>
 
 <main>
-  {#if tab === 'suche'}<Search />
-  {:else if tab === 'sammlung'}<Collection />
-  {:else if tab === 'wunschliste'}<Wishlist />
-  {:else if tab === 'marktplatz'}<Market />
+  {#if nav.tab === 'start'}<Dashboard />
+  {:else if nav.tab === 'suche'}<Search />
+  {:else if nav.tab === 'sammlung'}<Collection />
+  {:else if nav.tab === 'wunschliste'}<Wishlist />
+  {:else if nav.tab === 'marktplatz'}<Market />
   {:else}<Profile />{/if}
 </main>
 
 <CardDetail />
+<PublicProfile />
 
 <style>
   .tabs { display: flex; gap: 6px; max-width: 1100px; margin: 16px auto 0; padding: 0 16px; flex-wrap: wrap; }

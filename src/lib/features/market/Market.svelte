@@ -4,6 +4,7 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
+  import { profileView } from '$lib/stores/profileview.svelte';
 
   const GAMES = [
     { id: '', label: 'Alle' }, { id: 'pokemon', label: 'Pokémon' }, { id: 'magic', label: 'Magic' },
@@ -24,12 +25,9 @@
   }
   onMount(load);
 
-  function openOffer(m: MarketCard) {
-    detail.open({ game: m.game, name: m.name, imageUrl: m.image_url, setName: m.set_name, number: m.number, rarity: m.rarity, lang: m.language, price: m.asking_price, currency: m.currency, cardmarketUrl: m.cardmarket_url, condition: m.condition });
-  }
-  function openSeek(s: SeekingCard) {
-    detail.open({ game: s.game, name: s.name, imageUrl: s.image_url, setName: s.set_name, number: s.number, rarity: s.rarity, lang: s.language, price: s.seek_max_price, currency: s.seek_currency, cardmarketUrl: s.cardmarket_url, condition: s.seek_condition });
-  }
+  function openProfile(id?: string | null) { if (id) profileView.open(id); }
+  function openOffer(m: MarketCard) { detail.open({ game: m.game, name: m.name, imageUrl: m.image_url, setName: m.set_name, number: m.number, rarity: m.rarity, lang: m.language, price: m.asking_price, currency: m.currency, cardmarketUrl: m.cardmarket_url, condition: m.condition }); }
+  function openSeek(s: SeekingCard) { detail.open({ game: s.game, name: s.name, imageUrl: s.image_url, setName: s.set_name, number: s.number, rarity: s.rarity, lang: s.language, price: s.seek_max_price, currency: s.seek_currency, cardmarketUrl: s.cardmarket_url, condition: s.seek_condition }); }
 </script>
 
 <div class="coll-head">
@@ -58,7 +56,7 @@
           <div class="name">{m.name}</div>
           <div class="set"><Flag lang={m.language} />{m.set_name ?? ''}{#if m.condition} · {m.condition}{/if}</div>
           <div class="price">{m.asking_price != null ? fmt(m.asking_price, m.currency ?? 'EUR') : 'VB'}</div>
-          <div class="who">von {m.seller_name ?? 'Sammler'}{m.is_mine ? ' (du)' : ''}</div>
+          <div class="who">von <button class="link" onclick={() => openProfile(m.seller_id)}>{m.seller_name ?? 'Sammler'}</button>{m.is_mine ? ' (du)' : ''}</div>
           {#if m.seller_contact}<div class="contact">Kontakt: {m.seller_contact}</div>{/if}
         </div>
       </div>
@@ -72,7 +70,7 @@
           <div class="name">{s.name}</div>
           <div class="set"><Flag lang={s.language} />{s.set_name ?? ''}{#if s.seek_condition} · ab {s.seek_condition}{/if}</div>
           <div class="price">{s.seek_max_price != null ? 'bis ' + fmt(s.seek_max_price, s.seek_currency ?? 'EUR') : 'Preis egal'}</div>
-          <div class="who">sucht {s.seeker_name ?? 'Sammler'}{s.is_mine ? ' (du)' : ''}{#if s.seeker_country} · {s.seeker_country}{/if}</div>
+          <div class="who">sucht <button class="link" onclick={() => openProfile(s.seeker_id)}>{s.seeker_name ?? 'Sammler'}</button>{s.is_mine ? ' (du)' : ''}{#if s.seeker_country} · {s.seeker_country}{/if}</div>
           {#if s.seeker_contact}<div class="contact">Kontakt: {s.seeker_contact}</div>{/if}
         </div>
       </div>
@@ -92,5 +90,6 @@
   .mkt-filter input { padding: 8px 11px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; }
   .mkt-filter .ghost { padding: 8px 14px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: inherit; cursor: pointer; }
   .who { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .who .link { background: none; border: 0; padding: 0; color: var(--accent, #6366f1); cursor: pointer; font: inherit; text-decoration: underline; }
   .contact { font-size: 0.72rem; color: var(--accent, #6366f1); }
 </style>
