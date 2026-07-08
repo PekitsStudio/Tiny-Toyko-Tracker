@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { listCards, deleteCard, setCardQuantity, type CollectionCard } from '$lib/services/collection.service';
+  import {
+    listCards, deleteCard, setCardQuantity, refreshCollectionPrices, type CollectionCard
+  } from '$lib/services/collection.service';
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
@@ -9,6 +11,8 @@
   let status = $state('');
   let loading = $state(false);
   let busy = $state<number | null>(null);
+  let refreshing = $state(false);
+  let priceMsg = $state('');
 
   async function load() {
     loading = true; status = '';
@@ -24,6 +28,18 @@
 
   const total = $derived(cards.reduce((s, c) => s + (c.price_current ?? 0) * (c.quantity ?? 1), 0));
   const count = $derived(cards.reduce((s, c) => s + (c.quantity ?? 1), 0));
+
+  async function refreshPrices() {
+    refreshing = true; priceMsg = 'Preise werden geladen…';
+    try {
+      const { updated, total: t } = await refreshCollectionPrices((d, tt) => (priceMsg = `Preise… ${d}/${tt}`));
+      await load();
+      priceMsg = `${updated} von ${t} aktualisiert.`;
+      setTimeout(() => (priceMsg = ''), 3500);
+    } catch (e) {
+      priceMsg = (e as Error).message;
+    } finally { refreshing = false; }
+  }
 
   async function changeQty(c: CollectionCard, delta: number) {
     const q = Math.max(1, (c.quantity ?? 1) + delta);
@@ -50,10 +66,20 @@
 </script>
 
 <div class="coll-head">
-  <div><h2>Deine Sammlung</h2><div class="muted">{count} Karten · Wert {fmt(total)}</div></div>
-  <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : 'Aktualisieren'}</button>
+  <div>
+    <h2>Deine Sammlung</h2>
+    <div class="muted">{count} Karten · Wert {fmt(total)}{#if priceMsg} · {priceMsg}{/if}</div>
+  </div>
+  <div class="head-btns">
+    <button class="primary" onclick={refreshPrices} disabled={refreshing || loading}>
+      {refreshing ? '…' : 'Preise aktualisieren'}
+    </button>
+    <button class="ghost" onclick={load} disabled={loading || refreshing}>{loading ? '…' : 'Neu laden'}</button>
+  </div>
 </div>
+
 {#if status}<div class="hint">{status}</div>{/if}
+
 <div class="grid">
   {#each cards as c (c.id)}
     <div class="card" class:busy={busy === c.id}>
@@ -80,10 +106,13 @@
 </div>
 
 <style>
-  .coll-head { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 16px; }
+  .coll-head { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 16px; gap: 12px; flex-wrap: wrap; }
   .coll-head h2 { margin: 0; }
   .muted { color: var(--muted, #9aa0ad); font-size: 14px; }
-  .coll-head button { padding: 8px 14px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: inherit; cursor: pointer; }
+  .head-btns { display: flex; gap: 8px; }
+  .head-btns button { padding: 8px 14px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: inherit; cursor: pointer; }
+  .head-btns .primary { background: var(--accent, #6366f1); border-color: transparent; color: #fff; font-weight: 600; }
+  .head-btns button:disabled { opacity: 0.6; cursor: default; }
   .card.busy { opacity: 0.55; pointer-events: none; }
   .card-actions { display: flex; align-items: center; gap: 6px; padding: 8px; }
   .card-actions button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: inherit; cursor: pointer; font-size: 15px; line-height: 1; }

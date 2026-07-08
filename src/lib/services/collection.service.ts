@@ -1,5 +1,11 @@
 import { supabase } from '$lib/supabase';
+import { Adapters } from '$lib/adapters/tcg-adapters.js';
 import type { SearchCard } from '$lib/types';
+
+type PriceResult = { price: number | null; low: number | null; trend: number | null; currency?: string };
+const PriceEngine = Adapters as unknown as {
+	fetchPrices: (game: string, externalId: string, opts?: { lang?: string }) => Promise<PriceResult>;
+};
 
 // Optionale Zusatzfelder beim Hinzufuegen (Menge, Zustand, Sprache).
 export type AddOptions = {
@@ -127,6 +133,19 @@ export async function setCardQuantity(id: number, quantity: number): Promise<voi
 	if (error) throw new Error(error.message);
 }
 
+// Beliebige erlaubte Felder einer Sammlungskarte aendern (Zustand, Sprache, Menge, Notiz).
+const CARD_EDITABLE = ['quantity', 'condition', 'language', 'notes'] as const;
+export type CardPatch = Partial<Record<(typeof CARD_EDITABLE)[number], string | number | null>>;
+
+export async function updateCard(id: number, fields: CardPatch): Promise<void> {
+	await currentUserId();
+	const patch: Record<string, unknown> = {};
+	for (const k of CARD_EDITABLE) if (fields[k] !== undefined) patch[k] = fields[k];
+	if (!Object.keys(patch).length) return;
+	const { error } = await supabase().from('cards').update(patch).eq('id', id);
+	if (error) throw new Error(error.message);
+}
+
 // --- Wunschliste ---
 export interface WishlistItem {
 	id: number;
@@ -160,4 +179,47 @@ export async function deleteWishlist(id: number): Promise<void> {
 	await currentUserId();
 	const { error } = await supabase().from('wishlist').delete().eq('id', id);
 	if (error) throw new Error(error.message);
+}
+
+// --- Preise aktualisieren (Sammlung) ---
+export async function refreshCollectionPrices(
+	onProgress?: (done: number, total: number) => void
+): Promise<{ updated: number; total: number }> {
+	await currentUserId();
+	const rows = must(
+		await supabase().from('cards').select('id, game, external_id, language').eq('status', 'owned')
+	) as { id: number; game: string; external_id: string; language: string | null }[];
+
+	let updated = 0;
+	let done = 0;
+	let i = 0;
+	const CONCURRENCY = 6;
+
+	async function worker() {
+		while (i < rows.length) {
+			const r = rows[i++];
+			try {
+				const p = await PriceEngine.fetchPrices(r.game, r.external_id, {
+					lang: r.language ? r.language.toLowerCase() : undefined
+				});
+				if (p && (p.price !== null || p.low !== null || p.trend !== null)) {
+					const patch: Record<string, unknown> = {
+						price_current: p.price,
+						price_low: p.low,
+						price_trend: p.trend
+					};
+					if (p.currency) patch.currency = p.currency;
+					await supabase().from('cards').update(patch).eq('id', r.id);
+					updated++;
+				}
+			} catch {
+				/* einzelne Fehler stoppen den Rest nicht */
+			}
+			done++;
+			onProgress?.(done, rows.length);
+		}
+	}
+
+	await Promise.all(Array.from({ length: Math.min(CONCURRENCY, rows.length) }, worker));
+	return { updated, total: rows.length };
 }
