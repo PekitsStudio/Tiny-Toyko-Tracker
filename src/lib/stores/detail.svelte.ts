@@ -1,4 +1,4 @@
-// Gemeinsamer Zustand fuer die Detailansicht (Suche, Sammlung, Wunschliste).
+// Gemeinsamer Zustand fuer die Detailansicht (Suche, Sammlung, Wunschliste, Marktplatz).
 export interface DetailCard {
 	game: string;
 	name: string;
@@ -14,13 +14,15 @@ export interface DetailCard {
 	cardmarketUrl?: string | null;
 	condition?: string | null;
 	quantity?: number;
-	cardId?: number; // nur bei Sammlungskarten -> Bearbeiten moeglich
+	cardId?: number; // nur bei Sammlungskarten -> Bearbeiten/Verkaufen moeglich
 	notes?: string | null;
+	forSale?: boolean | null;
+	askingPrice?: number | null;
 }
 
 class DetailStore {
 	card = $state<DetailCard | null>(null);
-	savedTick = $state(0); // erhoeht sich nach dem Speichern -> Sammlung laedt neu
+	savedTick = $state(0);
 	open(c: DetailCard) { this.card = c; }
 	close() { this.card = null; }
 	markSaved() { this.savedTick++; }

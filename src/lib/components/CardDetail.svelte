@@ -2,6 +2,7 @@
   import { detail } from '$lib/stores/detail.svelte';
   import { fmt, GAME_LABEL } from '$lib/format';
   import { updateCard } from '$lib/services/collection.service';
+  import { setForSale } from '$lib/services/market.service';
   import Flag from './Flag.svelte';
 
   const c = $derived(detail.card);
@@ -9,6 +10,7 @@
   const LANGS = ['DE', 'EN', 'FR', 'IT', 'ES', 'PT', 'NL', 'PL', 'RU', 'JA', 'KO'];
 
   let ed = $state({ condition: 'NM', language: 'DE', quantity: 1, notes: '' });
+  let sale = $state<{ forSale: boolean; askingPrice: number | null }>({ forSale: false, askingPrice: null });
   let saving = $state(false);
   let savedMsg = $state('');
 
@@ -21,6 +23,7 @@
         quantity: cc.quantity ?? 1,
         notes: cc.notes ?? ''
       };
+      sale = { forSale: !!cc.forSale, askingPrice: cc.askingPrice ?? null };
       savedMsg = '';
     }
   });
@@ -38,6 +41,7 @@
         quantity: Math.max(1, Math.floor(ed.quantity)),
         notes: ed.notes ? ed.notes : null
       });
+      await setForSale(c.cardId, sale.forSale, sale.forSale ? (sale.askingPrice ?? null) : null);
       detail.markSaved();
       savedMsg = 'Gespeichert ✓';
     } catch (e) {
@@ -47,7 +51,6 @@
     }
   }
 
-  // aktuelle Sprache in die Optionen aufnehmen, falls nicht in der Standardliste
   const langOptions = $derived(
     ed.language && !LANGS.includes(ed.language) ? [ed.language, ...LANGS] : LANGS
   );
@@ -80,10 +83,16 @@
                 <label>Zustand<select bind:value={ed.condition}>{#each CONDITIONS as x}<option>{x}</option>{/each}</select></label>
                 <label>Sprache<select bind:value={ed.language}>{#each langOptions as x}<option>{x}</option>{/each}</select></label>
               </div>
-              <div class="row2">
-                <label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label>
-              </div>
+              <div class="row2"><label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label></div>
               <label>Notiz<textarea rows="2" bind:value={ed.notes}></textarea></label>
+
+              <div class="sale">
+                <label class="chk"><input type="checkbox" bind:checked={sale.forSale} /> Zum Verkauf anbieten</label>
+                {#if sale.forSale}
+                  <label>Preis<input type="number" min="0" step="0.01" placeholder="z. B. 4.50" bind:value={sale.askingPrice} /></label>
+                {/if}
+              </div>
+
               <div class="saverow">
                 <button class="save" onclick={save} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
                 {#if savedMsg}<span class="saved">{savedMsg}</span>{/if}
@@ -113,6 +122,9 @@
   .edit label { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; color: var(--muted); flex: 1; }
   .row2 { display: flex; gap: 10px; }
   .edit select, .edit input, .edit textarea { padding: 7px 9px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
+  .sale { border-top: 1px dashed #2a2f3a; padding-top: 8px; margin-top: 2px; display: flex; flex-direction: column; gap: 8px; }
+  .chk { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
+  .chk input { width: auto; }
   .saverow { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .save { padding: 8px 16px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
   .saved { color: #86efac; font-size: 0.85rem; }

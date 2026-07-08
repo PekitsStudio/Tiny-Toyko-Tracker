@@ -105,6 +105,8 @@ export interface CollectionCard {
 	price_current: number | null;
 	currency: string | null;
 	notes: string | null;
+	for_sale: boolean | null;
+	asking_price: number | null;
 }
 
 export async function listCards(): Promise<CollectionCard[]> {
@@ -113,7 +115,7 @@ export async function listCards(): Promise<CollectionCard[]> {
 		await supabase()
 			.from('cards')
 			.select(
-				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency, notes'
+				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency, notes, for_sale, asking_price'
 			)
 			.eq('status', 'owned')
 			.order('added_at', { ascending: false })

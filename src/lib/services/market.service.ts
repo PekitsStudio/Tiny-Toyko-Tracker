@@ -32,3 +32,18 @@ export async function listMarket(opts: { game?: string; q?: string } = {}): Prom
 	if (error) throw new Error(error.message);
 	return (data ?? []) as MarketCard[];
 }
+
+// Eigene Sammlungskarte zum Verkauf anbieten / zurueckziehen.
+export async function setForSale(
+	cardId: number,
+	forSale: boolean,
+	askingPrice: number | null
+): Promise<void> {
+	const { data, error: authErr } = await supabase().auth.getUser();
+	if (authErr || !data.user) throw new Error('Nicht eingeloggt');
+	const { error } = await supabase()
+		.from('cards')
+		.update({ for_sale: forSale, asking_price: forSale ? askingPrice : null })
+		.eq('id', cardId);
+	if (error) throw new Error(error.message);
+}
