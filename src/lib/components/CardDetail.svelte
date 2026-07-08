@@ -2,7 +2,7 @@
   import { detail } from '$lib/stores/detail.svelte';
   import { fmt, GAME_LABEL } from '$lib/format';
   import { updateCard } from '$lib/services/collection.service';
-  import { setForSale } from '$lib/services/market.service';
+  import { setForSale, setSeeking } from '$lib/services/market.service';
   import Flag from './Flag.svelte';
 
   const c = $derived(detail.card);
@@ -11,49 +11,47 @@
 
   let ed = $state({ condition: 'NM', language: 'DE', quantity: 1, notes: '' });
   let sale = $state<{ forSale: boolean; askingPrice: number | null }>({ forSale: false, askingPrice: null });
+  let seek = $state<{ seeking: boolean; maxPrice: number | null }>({ seeking: false, maxPrice: null });
   let saving = $state(false);
   let savedMsg = $state('');
 
   $effect(() => {
     const cc = detail.card;
+    savedMsg = '';
     if (cc?.cardId) {
-      ed = {
-        condition: cc.condition ?? 'NM',
-        language: (cc.lang ?? 'DE').toUpperCase(),
-        quantity: cc.quantity ?? 1,
-        notes: cc.notes ?? ''
-      };
+      ed = { condition: cc.condition ?? 'NM', language: (cc.lang ?? 'DE').toUpperCase(), quantity: cc.quantity ?? 1, notes: cc.notes ?? '' };
       sale = { forSale: !!cc.forSale, askingPrice: cc.askingPrice ?? null };
-      savedMsg = '';
+    }
+    if (cc?.wishlistId) {
+      seek = { seeking: !!cc.seeking, maxPrice: cc.seekMaxPrice ?? null };
     }
   });
 
   function close() { detail.close(); }
   function onkey(e: KeyboardEvent) { if (e.key === 'Escape') close(); }
 
-  async function save() {
+  async function saveCard() {
     if (!c?.cardId) return;
     saving = true;
     try {
-      await updateCard(c.cardId, {
-        condition: ed.condition,
-        language: ed.language,
-        quantity: Math.max(1, Math.floor(ed.quantity)),
-        notes: ed.notes ? ed.notes : null
-      });
+      await updateCard(c.cardId, { condition: ed.condition, language: ed.language, quantity: Math.max(1, Math.floor(ed.quantity)), notes: ed.notes ? ed.notes : null });
       await setForSale(c.cardId, sale.forSale, sale.forSale ? (sale.askingPrice ?? null) : null);
       detail.markSaved();
       savedMsg = 'Gespeichert ✓';
-    } catch (e) {
-      savedMsg = (e as Error).message;
-    } finally {
-      saving = false;
-    }
+    } catch (e) { savedMsg = (e as Error).message; } finally { saving = false; }
   }
 
-  const langOptions = $derived(
-    ed.language && !LANGS.includes(ed.language) ? [ed.language, ...LANGS] : LANGS
-  );
+  async function saveSeek() {
+    if (!c?.wishlistId) return;
+    saving = true;
+    try {
+      await setSeeking(c.wishlistId, seek.seeking, seek.seeking ? (seek.maxPrice ?? null) : null);
+      detail.markSaved();
+      savedMsg = 'Gespeichert ✓';
+    } catch (e) { savedMsg = (e as Error).message; } finally { saving = false; }
+  }
+
+  const langOptions = $derived(ed.language && !LANGS.includes(ed.language) ? [ed.language, ...LANGS] : LANGS);
 </script>
 
 <svelte:window onkeydown={onkey} />
@@ -85,16 +83,22 @@
               </div>
               <div class="row2"><label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label></div>
               <label>Notiz<textarea rows="2" bind:value={ed.notes}></textarea></label>
-
               <div class="sale">
                 <label class="chk"><input type="checkbox" bind:checked={sale.forSale} /> Zum Verkauf anbieten</label>
-                {#if sale.forSale}
-                  <label>Preis<input type="number" min="0" step="0.01" placeholder="z. B. 4.50" bind:value={sale.askingPrice} /></label>
-                {/if}
+                {#if sale.forSale}<label>Preis<input type="number" min="0" step="0.01" bind:value={sale.askingPrice} /></label>{/if}
               </div>
-
               <div class="saverow">
-                <button class="save" onclick={save} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
+                <button class="save" onclick={saveCard} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
+                {#if savedMsg}<span class="saved">{savedMsg}</span>{/if}
+              </div>
+            </div>
+          {:else if c.wishlistId}
+            <div class="edit">
+              <h3>Öffentlich suchen</h3>
+              <label class="chk"><input type="checkbox" bind:checked={seek.seeking} /> Diese Karte im Marktplatz suchen</label>
+              {#if seek.seeking}<label>Höchstpreis<input type="number" min="0" step="0.01" placeholder="z. B. 3.00" bind:value={seek.maxPrice} /></label>{/if}
+              <div class="saverow">
+                <button class="save" onclick={saveSeek} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
                 {#if savedMsg}<span class="saved">{savedMsg}</span>{/if}
               </div>
             </div>

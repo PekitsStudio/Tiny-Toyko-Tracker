@@ -164,6 +164,9 @@ export interface WishlistItem {
 	price_trend: number | null;
 	currency: string | null;
 	cardmarket_url: string | null;
+	seeking: boolean | null;
+	seek_max_price: number | null;
+	seek_currency: string | null;
 }
 
 export async function listWishlist(): Promise<WishlistItem[]> {
@@ -172,7 +175,7 @@ export async function listWishlist(): Promise<WishlistItem[]> {
 		await supabase()
 			.from('wishlist')
 			.select(
-				'id, game, name, set_name, number, rarity, image_url, language, price_current, price_low, price_trend, currency, cardmarket_url'
+				'id, game, name, set_name, number, rarity, image_url, language, price_current, price_low, price_trend, currency, cardmarket_url, seeking, seek_max_price, seek_currency'
 			)
 			.order('id', { ascending: false })
 	);

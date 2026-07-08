@@ -14,10 +14,13 @@ export interface DetailCard {
 	cardmarketUrl?: string | null;
 	condition?: string | null;
 	quantity?: number;
-	cardId?: number; // nur bei Sammlungskarten -> Bearbeiten/Verkaufen moeglich
+	cardId?: number; // Sammlungskarte -> Bearbeiten/Verkaufen
 	notes?: string | null;
 	forSale?: boolean | null;
 	askingPrice?: number | null;
+	wishlistId?: number; // Wunschlisten-Karte -> oeffentlich suchen
+	seeking?: boolean | null;
+	seekMaxPrice?: number | null;
 }
 
 class DetailStore {
