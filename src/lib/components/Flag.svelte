@@ -1,9 +1,6 @@
 <script lang="ts">
   import { langLabel } from '$lib/format';
-
   let { lang }: { lang?: string | null } = $props();
-
-  // Sprache -> Laendercode fuer die Flagge (en->gb, ja->jp usw.)
   const MAP: Record<string, string> = {
     de: 'de', en: 'gb', fr: 'fr', es: 'es', it: 'it', pt: 'pt', 'pt-br': 'br', 'pt-pt': 'pt',
     nl: 'nl', pl: 'pl', ru: 'ru', ja: 'jp', ko: 'kr', 'zh-tw': 'tw', 'zh-cn': 'cn',
@@ -15,20 +12,24 @@
 {#if cc}
   <img
     class="flag-img"
-    src={`https://flagcdn.com/20x15/${cc}.png`}
-    srcset={`https://flagcdn.com/40x30/${cc}.png 2x`}
-    width="20"
-    height="15"
-    loading="lazy"
+    src={`https://flagcdn.com/16x12/${cc}.png`}
+    srcset={`https://flagcdn.com/32x24/${cc}.png 2x`}
     alt={langLabel(lang ?? undefined)}
     title={langLabel(lang ?? undefined)}
   />
 {/if}
 
 <style>
+  /* fest klein halten und gegen globale .card-img-Regeln absichern */
   .flag-img {
-    border-radius: 2px;
-    vertical-align: -2px;
+    display: inline-block;
+    width: 16px;
+    height: 12px;
+    aspect-ratio: auto;
+    object-fit: cover;
+    background: none;
+    vertical-align: middle;
     margin-right: 5px;
+    border-radius: 2px;
   }
 </style>

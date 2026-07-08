@@ -119,7 +119,7 @@
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(172px,1fr)); gap:16px; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; display:flex; flex-direction:column; position:relative; box-shadow:var(--shadow-sm); transition:transform var(--trans), box-shadow var(--trans), border-color var(--trans); }
   .card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--border-strong); }
-  .card img { width:100%; aspect-ratio:5/7; object-fit:contain; background:#0a0c10; }
+  .card > img { width:100%; aspect-ratio:5/7; object-fit:contain; background:#0a0c10; }
   .card .ph { aspect-ratio:5/7; background:#0a0c10; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:.75rem; }
   .card .meta { padding:12px 13px 13px; display:flex; flex-direction:column; gap:3px; flex:1; }
   .card .name { font-weight:600; font-size:.88rem; line-height:1.3; }
