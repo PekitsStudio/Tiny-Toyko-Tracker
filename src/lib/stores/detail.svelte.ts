@@ -1,4 +1,4 @@
-// Gemeinsamer Zustand fuer die Detailansicht (von Suche, Sammlung, Wunschliste genutzt).
+// Gemeinsamer Zustand fuer die Detailansicht (Suche, Sammlung, Wunschliste).
 export interface DetailCard {
 	game: string;
 	name: string;
@@ -14,16 +14,16 @@ export interface DetailCard {
 	cardmarketUrl?: string | null;
 	condition?: string | null;
 	quantity?: number;
+	cardId?: number; // nur bei Sammlungskarten -> Bearbeiten moeglich
+	notes?: string | null;
 }
 
 class DetailStore {
 	card = $state<DetailCard | null>(null);
-	open(c: DetailCard) {
-		this.card = c;
-	}
-	close() {
-		this.card = null;
-	}
+	savedTick = $state(0); // erhoeht sich nach dem Speichern -> Sammlung laedt neu
+	open(c: DetailCard) { this.card = c; }
+	close() { this.card = null; }
+	markSaved() { this.savedTick++; }
 }
 
 export const detail = new DetailStore();
