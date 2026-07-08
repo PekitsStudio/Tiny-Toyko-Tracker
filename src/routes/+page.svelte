@@ -3,9 +3,10 @@
   import Collection from '$lib/features/collection/Collection.svelte';
   import Wishlist from '$lib/features/wishlist/Wishlist.svelte';
   import Market from '$lib/features/market/Market.svelte';
+  import Profile from '$lib/features/profile/Profile.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
 
-  let tab = $state<'suche' | 'sammlung' | 'wunschliste' | 'marktplatz'>('suche');
+  let tab = $state<'suche' | 'sammlung' | 'wunschliste' | 'marktplatz' | 'profil'>('suche');
 </script>
 
 <nav class="tabs">
@@ -13,13 +14,15 @@
   <button class:active={tab === 'sammlung'} onclick={() => (tab = 'sammlung')}>Sammlung</button>
   <button class:active={tab === 'wunschliste'} onclick={() => (tab = 'wunschliste')}>Wunschliste</button>
   <button class:active={tab === 'marktplatz'} onclick={() => (tab = 'marktplatz')}>Marktplatz</button>
+  <button class:active={tab === 'profil'} onclick={() => (tab = 'profil')}>Profil</button>
 </nav>
 
 <main>
   {#if tab === 'suche'}<Search />
   {:else if tab === 'sammlung'}<Collection />
   {:else if tab === 'wunschliste'}<Wishlist />
-  {:else}<Market />{/if}
+  {:else if tab === 'marktplatz'}<Market />
+  {:else}<Profile />{/if}
 </main>
 
 <CardDetail />
