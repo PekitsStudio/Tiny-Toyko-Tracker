@@ -2,25 +2,24 @@
   import Search from '$lib/features/search/Search.svelte';
   import Collection from '$lib/features/collection/Collection.svelte';
   import Wishlist from '$lib/features/wishlist/Wishlist.svelte';
+  import Market from '$lib/features/market/Market.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
 
-  let tab = $state<'suche' | 'sammlung' | 'wunschliste'>('suche');
+  let tab = $state<'suche' | 'sammlung' | 'wunschliste' | 'marktplatz'>('suche');
 </script>
 
 <nav class="tabs">
   <button class:active={tab === 'suche'} onclick={() => (tab = 'suche')}>Suche</button>
   <button class:active={tab === 'sammlung'} onclick={() => (tab = 'sammlung')}>Sammlung</button>
   <button class:active={tab === 'wunschliste'} onclick={() => (tab = 'wunschliste')}>Wunschliste</button>
+  <button class:active={tab === 'marktplatz'} onclick={() => (tab = 'marktplatz')}>Marktplatz</button>
 </nav>
 
 <main>
-  {#if tab === 'suche'}
-    <Search />
-  {:else if tab === 'sammlung'}
-    <Collection />
-  {:else}
-    <Wishlist />
-  {/if}
+  {#if tab === 'suche'}<Search />
+  {:else if tab === 'sammlung'}<Collection />
+  {:else if tab === 'wunschliste'}<Wishlist />
+  {:else}<Market />{/if}
 </main>
 
 <CardDetail />
