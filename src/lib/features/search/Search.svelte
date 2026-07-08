@@ -6,6 +6,7 @@
   import { getRecent, recordRecent } from '$lib/recent';
   import { langLabel } from '$lib/format';
   import { addCard, addWishlist } from '$lib/services/collection.service';
+  import { detail } from '$lib/stores/detail.svelte';
   import type { Game, SearchCard, SearchFilters, SearchMode } from '$lib/types';
 
   const service = new SearchService(new AdapterCardsRepo());
@@ -128,6 +129,14 @@
     }
     setTimeout(() => (flash = ''), 3500);
   }
+
+  function openDetail(c: SearchCard) {
+    detail.open({
+      game: c.game, name: c.name, imageUrl: c.imageUrl, setName: c.setName, number: c.number,
+      rarity: c.rarity, lang: c.lang, price: c.cardmarketPrice, priceLow: c.priceLow,
+      priceTrend: c.priceTrend, currency: c.currency, cardmarketUrl: c.cardmarketUrl
+    });
+  }
 </script>
 
 <div class="search-hero">
@@ -208,7 +217,7 @@
   onadd={(c) => act('add', c)}
   onquick={(c) => act('quick', c)}
   onwish={(c) => act('wish', c)}
-  ondetail={() => {}}
+  ondetail={openDetail}
 />
 
 <style>

@@ -126,3 +126,38 @@ export async function setCardQuantity(id: number, quantity: number): Promise<voi
 	const { error } = await supabase().from('cards').update({ quantity: q }).eq('id', id);
 	if (error) throw new Error(error.message);
 }
+
+// --- Wunschliste ---
+export interface WishlistItem {
+	id: number;
+	game: string;
+	name: string;
+	set_name: string | null;
+	number: string | null;
+	rarity: string | null;
+	image_url: string | null;
+	language: string | null;
+	price_current: number | null;
+	price_low: number | null;
+	price_trend: number | null;
+	currency: string | null;
+	cardmarket_url: string | null;
+}
+
+export async function listWishlist(): Promise<WishlistItem[]> {
+	await currentUserId();
+	return must(
+		await supabase()
+			.from('wishlist')
+			.select(
+				'id, game, name, set_name, number, rarity, image_url, language, price_current, price_low, price_trend, currency, cardmarket_url'
+			)
+			.order('id', { ascending: false })
+	);
+}
+
+export async function deleteWishlist(id: number): Promise<void> {
+	await currentUserId();
+	const { error } = await supabase().from('wishlist').delete().eq('id', id);
+	if (error) throw new Error(error.message);
+}

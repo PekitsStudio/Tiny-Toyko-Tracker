@@ -3,6 +3,7 @@
   import { listCards, deleteCard, setCardQuantity, type CollectionCard } from '$lib/services/collection.service';
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
+  import { detail } from '$lib/stores/detail.svelte';
 
   let cards = $state<CollectionCard[]>([]);
   let status = $state('');
@@ -39,6 +40,13 @@
     catch (e) { status = (e as Error).message; }
     finally { busy = null; }
   }
+  function openDetail(c: CollectionCard) {
+    detail.open({
+      game: c.game, name: c.name, imageUrl: c.image_url, setName: c.set_name, number: c.number,
+      rarity: c.rarity, lang: c.language, price: c.price_current, currency: c.currency,
+      condition: c.condition, quantity: c.quantity
+    });
+  }
 </script>
 
 <div class="coll-head">
@@ -50,7 +58,11 @@
   {#each cards as c (c.id)}
     <div class="card" class:busy={busy === c.id}>
       <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
-      {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" />{:else}<div class="ph">kein Bild</div>{/if}
+      {#if c.image_url}
+        <img src={c.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => openDetail(c)} />
+      {:else}
+        <div class="ph">kein Bild</div>
+      {/if}
       <div class="meta">
         <div class="name">{c.name}</div>
         <div class="set"><Flag lang={c.language} />{c.set_name ?? ''}</div>

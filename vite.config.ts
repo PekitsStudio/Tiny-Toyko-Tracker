@@ -6,7 +6,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 // Unterpfad fuer GitHub Pages (Projekt-Repo). Im CI-Build via BASE_PATH gesetzt,
 // lokal (npm run dev) bleibt es leer -> laeuft unter http://localhost:5173/.
-const base = process.env.BASE_PATH || '';
+const base = (process.env.BASE_PATH || '') as '' | `/${string}`;
 
 export default defineConfig({
 	plugins: [

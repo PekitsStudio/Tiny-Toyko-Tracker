@@ -17,7 +17,7 @@ export interface CardsRepo {
 // Ruft die portierte TCG-Engine (adapters) direkt auf — kein api/-Umweg noetig.
 // Die Adapter sprechen die externen APIs (tcgdex, scryfall, ygoprodeck, optcgapi)
 // per CORS direkt aus dem Browser an.
-const A = Adapters as {
+const A = Adapters as unknown as {
 	search: (
 		game: Game,
 		q: string,
