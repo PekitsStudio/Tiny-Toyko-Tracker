@@ -244,4 +244,14 @@
   .dc-body { white-space: pre-wrap; word-break: break-word; font-size: 0.9rem; }
   .cadd { display: flex; gap: 8px; }
   .cadd input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; font: inherit; }
+
+  @media (max-width: 560px) {
+    .ov { padding: 0; align-items: flex-end; }
+    .dlg { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; border-bottom: 0; }
+    .body { padding: 16px; gap: 14px; }
+    .big { width: 100%; max-width: 260px; margin: 0 auto; }
+    .info { min-width: 0; width: 100%; }
+    .row2 { gap: 8px; }
+    .row2 label { flex: 1 1 45%; }
+  }
 </style>

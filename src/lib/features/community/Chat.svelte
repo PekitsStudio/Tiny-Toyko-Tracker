@@ -76,9 +76,11 @@
 </div>
 
 <style>
-  .rooms { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .rooms button { padding: 6px 12px; border-radius: 999px; border: 1px solid #2a2f3a; background: transparent; color: var(--muted, #9aa0ad); cursor: pointer; font-size: 0.82rem; }
-  .rooms button.active { background: var(--accent, #6366f1); border-color: transparent; color: #fff; }
+  .rooms { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+  .rooms::-webkit-scrollbar { display: none; }
+  .rooms button { flex: 0 0 auto; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--border, #2a2f3a); background: var(--surface, #14181f); color: var(--muted, #9aa0ad); cursor: pointer; font-size: 0.82rem; white-space: nowrap; transition: var(--trans, 0.16s ease); }
+  .rooms button:hover { color: var(--text, #eaedf3); border-color: var(--border-strong, #38414f); }
+  .rooms button.active { background: var(--accent, #6e7cff); border-color: transparent; color: var(--on-accent, #fff); }
   .chatbox { background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 12px; padding: 12px; height: 52vh; min-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
   .msg { max-width: 78%; align-self: flex-start; background: #12151d; border: 1px solid #2a2f3a; border-radius: 10px; padding: 7px 11px; }
   .msg.mine { align-self: flex-end; background: #1c2130; border-color: #34406b; }

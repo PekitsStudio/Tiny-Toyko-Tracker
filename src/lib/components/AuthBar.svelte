@@ -112,17 +112,29 @@
 </div>
 
 <style>
-  .authbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid #232833; }
+  .authbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--border, #232833); background: color-mix(in srgb, var(--surface, #14181f) 60%, transparent); }
   .modes { display: flex; gap: 4px; }
-  .modes button { padding: 5px 10px; border-radius: 999px; border: 1px solid #2a2f3a; background: transparent; color: var(--muted, #9aa0ad); cursor: pointer; font-size: 0.8rem; }
-  .modes button.active { background: var(--accent, #6366f1); border-color: transparent; color: #fff; }
+  .modes button { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border, #2a2f3a); background: transparent; color: var(--muted, #9aa0ad); cursor: pointer; font-size: 0.8rem; transition: var(--trans, 0.16s ease); }
+  .modes button:hover { color: var(--text, #eaedf3); border-color: var(--border-strong, #38414f); }
+  .modes button.active { background: var(--accent, #6e7cff); border-color: transparent; color: var(--on-accent, #fff); }
   form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  input { padding: 7px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; }
+  input { padding: 9px 12px; border-radius: var(--r-sm, 8px); border: 1px solid var(--border, #2a2f3a); background: var(--surface-2, #12151d); color: inherit; }
+  input:focus { border-color: var(--accent, #6e7cff); outline: none; }
   .namewrap { position: relative; display: inline-flex; align-items: center; gap: 6px; }
   .ns { font-size: 0.78rem; color: var(--muted); }
-  form button, .authbar > button { padding: 7px 14px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; cursor: pointer; }
-  .authbar > .ghost { background: transparent; border: 1px solid #2a2f3a; color: inherit; }
+  form button, .authbar > button { padding: 9px 16px; border-radius: var(--r-sm, 8px); border: 0; background: var(--accent, #6e7cff); color: var(--on-accent, #fff); cursor: pointer; font-weight: 600; }
+  .authbar > .ghost { background: transparent; border: 1px solid var(--border, #2a2f3a); color: inherit; font-weight: 500; }
   .lbl, .who { color: var(--muted, #9aa0ad); }
-  .err { color: #ef4444; font-size: 13px; }
-  .ok { color: #86efac; font-size: 13px; }
+  .who { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .err { color: var(--neg, #ef4444); font-size: 13px; }
+  .ok { color: var(--pos, #86efac); font-size: 13px; }
+
+  @media (max-width: 640px) {
+    .authbar { padding: 10px 12px; gap: 8px; }
+    .modes { width: 100%; }
+    .modes button { flex: 1 1 0; text-align: center; }
+    form { width: 100%; }
+    form input, .namewrap { flex: 1 1 100%; width: 100%; }
+    form button { flex: 1 1 100%; }
+  }
 </style>

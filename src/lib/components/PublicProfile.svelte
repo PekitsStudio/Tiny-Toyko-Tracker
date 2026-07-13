@@ -203,4 +203,13 @@
   .raterow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .raterow .primary { padding: 7px 14px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
   .raterow .ghost { padding: 7px 12px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: #fca5a5; cursor: pointer; }
+
+  @media (max-width: 560px) {
+    .ov { padding: 0; align-items: flex-end; }
+    .dlg { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; border-bottom: 0; padding: 18px 16px; }
+    .phead h2 { font-size: 1.25rem; }
+    .ogrid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+    .pactions { width: 100%; }
+    .pactions .primary, .pactions .ghost { flex: 1 1 auto; }
+  }
 </style>

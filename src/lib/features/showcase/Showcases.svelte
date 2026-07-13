@@ -310,4 +310,12 @@
   .cadd { display: flex; gap: 8px; margin-top: 4px; }
   .cadd input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; font: inherit; }
   .hint { color: var(--muted, #9aa0ad); font-size: 0.85rem; }
+
+  @media (max-width: 560px) {
+    .sgrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .col-hero { height: 150px; }
+    .col-hero-txt h2 { font-size: 1.3rem; }
+    .col-actions { gap: 6px; }
+    .col-react, .col-follow, .col-actions .ghost, .col-actions .primary { padding: 8px 11px; font-size: 0.82rem; }
+  }
 </style>
