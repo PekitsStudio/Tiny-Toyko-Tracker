@@ -2,7 +2,8 @@
   import Showcases from '$lib/features/showcase/Showcases.svelte';
   import Posts from '$lib/features/community/Posts.svelte';
   import Forum from '$lib/features/community/Forum.svelte';
-  let sub = $state<'showcases' | 'pulls' | 'guides' | 'reviews' | 'forum'>('showcases');
+  import Chat from '$lib/features/community/Chat.svelte';
+  let sub = $state<'showcases' | 'pulls' | 'guides' | 'reviews' | 'forum' | 'chat'>('showcases');
 </script>
 
 <div class="subnav">
@@ -11,13 +12,15 @@
   <button class:active={sub === 'guides'} onclick={() => (sub = 'guides')}>Guides</button>
   <button class:active={sub === 'reviews'} onclick={() => (sub = 'reviews')}>Reviews</button>
   <button class:active={sub === 'forum'} onclick={() => (sub = 'forum')}>Forum</button>
+  <button class:active={sub === 'chat'} onclick={() => (sub = 'chat')}>Chat</button>
 </div>
 
 {#if sub === 'showcases'}<Showcases only="entdecken" />
 {:else if sub === 'pulls'}<Posts kind="pulls" label="Pulls" />
 {:else if sub === 'guides'}<Posts kind="guide" label="Guides" />
 {:else if sub === 'reviews'}<Posts kind="review" label="Reviews" />
-{:else}<Forum />{/if}
+{:else if sub === 'forum'}<Forum />
+{:else}<Chat />{/if}
 
 <style>
   .subnav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }

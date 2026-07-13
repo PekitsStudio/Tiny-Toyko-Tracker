@@ -2,11 +2,13 @@
   import { onMount } from 'svelte';
   import {
     listMyShowcases, discoverShowcases, getShowcaseCards, createShowcase, deleteShowcase,
-    updateShowcase, addCardsToShowcase, removeShowcaseCard, toggleLike,
-    type Showcase, type ShowcaseCard, type Visibility
+    updateShowcase, addCardsToShowcase, removeShowcaseCard, toggleLike, toggleFollow,
+    listShowcaseComments, addShowcaseComment, deleteShowcaseComment,
+    type Showcase, type ShowcaseCard, type Visibility, type ShowcaseComment
   } from '$lib/services/showcase.service';
   import { listCards, type CollectionCard } from '$lib/services/collection.service';
   import { GAME_LABEL } from '$lib/format';
+  import { auth } from '$lib/stores/auth.svelte';
   import Flag from '$lib/components/Flag.svelte';
 
   let { only }: { only?: 'meine' | 'entdecken' } = $props();
@@ -18,6 +20,8 @@
 
   let sc = $state<Showcase | null>(null);
   let cards = $state<ShowcaseCard[]>([]);
+  let comments = $state<ShowcaseComment[]>([]);
+  let newComment = $state(''); let commentBusy = $state(false);
 
   let showCreate = $state(false);
   let cf = $state({ name: '', description: '', visibility: 'public' as Visibility, game: '' });
@@ -35,10 +39,38 @@
   function switchMode(m: 'meine' | 'entdecken') { mode = m; showCreate = false; loadList(); }
 
   async function open(s: Showcase) {
-    sc = s; showPicker = false;
+    sc = s; showPicker = false; comments = []; newComment = '';
     try { cards = await getShowcaseCards(s.id); } catch (e) { status = (e as Error).message; }
+    try { comments = await listShowcaseComments(s.id); } catch { comments = []; }
   }
-  function back() { sc = null; loadList(); }
+  function back() { sc = null; comments = []; loadList(); }
+
+  async function follow(s: Showcase) {
+    const wasFollowed = !!s.followed;
+    try {
+      await toggleFollow(s.id, wasFollowed);
+      s.followed = !wasFollowed;
+      s.follower_count = (s.follower_count ?? 0) + (wasFollowed ? -1 : 1);
+      list = [...list]; if (sc?.id === s.id) sc = { ...s };
+    } catch (e) { status = (e as Error).message; }
+  }
+  async function sendComment() {
+    if (!sc || !newComment.trim()) return; commentBusy = true;
+    try {
+      await addShowcaseComment(sc.id, newComment.trim());
+      newComment = ''; comments = await listShowcaseComments(sc.id);
+      sc.comment_count = (sc.comment_count ?? 0) + 1; sc = { ...sc };
+    } catch (e) { status = (e as Error).message; } finally { commentBusy = false; }
+  }
+  async function removeComment(id: number) {
+    if (!sc) return;
+    try {
+      await deleteShowcaseComment(id);
+      comments = comments.filter((x) => x.id !== id);
+      sc.comment_count = Math.max(0, (sc.comment_count ?? 1) - 1); sc = { ...sc };
+    } catch (e) { status = (e as Error).message; }
+  }
+  function cdt(iso: string) { try { return new Date(iso).toLocaleDateString('de-DE'); } catch { return ''; } }
 
   async function doCreate() {
     if (!cf.name.trim()) return; busy = true;
@@ -112,6 +144,7 @@
           {#if mode !== 'meine'}<div class="sauthor">von {s.author_name ?? 'Sammler'}</div>{/if}
           <div class="sactions">
             <button class="likebtn" class:on={(s.my_reactions ?? []).includes('like')} onclick={() => like(s)}>♥ {s.like_count ?? 0}</button>
+            {#if !s.is_mine}<button class="likebtn" class:on={s.followed} onclick={() => follow(s)}>{s.followed ? '★' : '☆'} {s.follower_count ?? 0}</button>{/if}
             {#if s.is_mine}<button class="del" onclick={() => del(s)}>Löschen</button>{/if}
           </div>
         </div>
@@ -134,7 +167,27 @@
 
   <h2 class="sctitle">{sc.name}</h2>
   {#if sc.description}<p class="scdesc">{sc.description}</p>{/if}
-  <div class="smeta">{cards.length} Karten · <span class="vis">{VIS[sc.visibility]}</span> · <button class="likebtn" class:on={(sc.my_reactions ?? []).includes('like')} onclick={() => like(sc!)}>♥ {sc.like_count ?? 0}</button></div>
+  <div class="smeta">
+    {cards.length} Karten · <span class="vis">{VIS[sc.visibility]}</span>
+    · <button class="likebtn" class:on={(sc.my_reactions ?? []).includes('like')} onclick={() => like(sc!)}>♥ {sc.like_count ?? 0}</button>
+    {#if !sc.is_mine}<button class="likebtn" class:on={sc.followed} onclick={() => follow(sc!)}>{sc.followed ? '★ Folgt' : '☆ Folgen'} {sc.follower_count ?? 0}</button>
+    {:else}<span class="fcount">★ {sc.follower_count ?? 0} Follower</span>{/if}
+  </div>
+
+  <div class="cmsection">
+    <h3 class="cmh">Kommentare ({comments.length})</h3>
+    {#each comments as cm (cm.id)}
+      <div class="cm">
+        <div class="cmtop"><b>{cm.author_name ?? 'Sammler'}</b><span class="cmdate">{cdt(cm.created_at)}</span>{#if auth.user?.id === cm.user_id}<button class="cmdel" onclick={() => removeComment(cm.id)} title="Löschen">✕</button>{/if}</div>
+        <div class="cmbody">{cm.body}</div>
+      </div>
+    {/each}
+    {#if !comments.length}<div class="hint">Noch keine Kommentare.</div>{/if}
+    <div class="cadd">
+      <input placeholder="Kommentar…" bind:value={newComment} onkeydown={(e) => { if (e.key === 'Enter') sendComment(); }} />
+      <button class="primary" onclick={sendComment} disabled={commentBusy || !newComment.trim()}>Senden</button>
+    </div>
+  </div>
 
   {#if showPicker}
     <div class="picker">
@@ -200,4 +253,16 @@
   .pcard img { width: 100%; aspect-ratio: 5/7; object-fit: contain; border-radius: 4px; }
   .pcard .pn { font-size: 0.68rem; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .card-actions .del2 { flex: 1; padding: 8px; border: 0; border-top: 1px solid var(--border, #2a2f3a); background: transparent; color: #fca5a5; cursor: pointer; font-size: 0.8rem; }
+  .fcount { color: var(--muted); font-size: 0.8rem; }
+  .cmsection { margin-top: 18px; border-top: 1px solid #232833; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .cmh { margin: 0 0 4px; font-size: 1rem; }
+  .cm { background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 10px; padding: 8px 12px; }
+  .cmtop { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .cmtop b { color: var(--accent, #6366f1); }
+  .cmdate { color: var(--muted); }
+  .cmdel { margin-left: auto; background: none; border: 0; color: #fca5a5; cursor: pointer; }
+  .cmbody { margin-top: 3px; font-size: 0.9rem; white-space: pre-wrap; }
+  .cadd { display: flex; gap: 8px; margin-top: 4px; }
+  .cadd input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; font: inherit; }
+  .hint { color: var(--muted, #9aa0ad); font-size: 0.85rem; }
 </style>

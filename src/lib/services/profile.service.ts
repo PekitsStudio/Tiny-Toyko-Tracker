@@ -27,10 +27,11 @@ export interface PublicProfile {
 	fav_games: string | null; collector_type: string | null; points: number | null; rank: number | null;
 	badges: string[] | null; active_offers: number | null; sold_count: number | null; total_cards: number | null; member_since: string | null;
 	fb_count: number | null; fb_pos: number | null; fb_avg: number | null; fb_recommend_pct: number | null;
+	rating_avg: number | null; rating_count: number | null;
 }
 export async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
 	const { data, error } = await supabase().from('profiles')
-		.select('user_id, name, country, contact, bio, fav_games, collector_type, points, rank, badges, active_offers, sold_count, total_cards, member_since, fb_count, fb_pos, fb_avg, fb_recommend_pct')
+		.select('user_id, name, country, contact, bio, fav_games, collector_type, points, rank, badges, active_offers, sold_count, total_cards, member_since, fb_count, fb_pos, fb_avg, fb_recommend_pct, rating_avg, rating_count')
 		.eq('user_id', userId).maybeSingle();
 	if (error) throw new Error(error.message);
 	return (data ?? null) as PublicProfile | null;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { profileView } from '$lib/stores/profileview.svelte';
   import { getPublicProfile, getUserFeedback, type PublicProfile, type FeedbackEntry } from '$lib/services/profile.service';
+  import { listRatings, rateUser, deleteRating, type UserRating } from '$lib/services/ratings.service';
   import { listMarketBySeller, type MarketCard } from '$lib/services/market.service';
   import { fmt } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
@@ -12,21 +13,50 @@
   let prof = $state<PublicProfile | null>(null);
   let offers = $state<MarketCard[]>([]);
   let fbs = $state<FeedbackEntry[]>([]);
+  let ratings = $state<UserRating[]>([]);
   let loading = $state(false); let err = $state(''); let friendMsg = $state('');
+
+  // Eigene Bewertung des angezeigten Nutzers (Formular).
+  let myStars = $state(0); let myComment = $state(''); let rateBusy = $state(false); let rateMsg = $state('');
+
+  const myRating = $derived(ratings.find((r) => r.is_mine) ?? null);
 
   $effect(() => {
     const id = profileView.userId;
-    if (!id) { prof = null; offers = []; fbs = []; err = ''; return; }
-    loading = true; err = ''; prof = null; offers = []; fbs = [];
+    if (!id) { prof = null; offers = []; fbs = []; ratings = []; err = ''; return; }
+    loading = true; err = ''; prof = null; offers = []; fbs = []; ratings = [];
+    myStars = 0; myComment = ''; rateMsg = '';
     (async () => {
       try {
         prof = await getPublicProfile(id);
         try { offers = await listMarketBySeller(id); } catch { offers = []; }
         try { fbs = await getUserFeedback(id); } catch { fbs = []; }
+        try {
+          ratings = await listRatings(id);
+          const mine = ratings.find((r) => r.is_mine);
+          if (mine) { myStars = mine.stars; myComment = mine.comment ?? ''; }
+        } catch { ratings = []; }
       } catch (e) { err = (e as Error).message; }
       finally { loading = false; }
     })();
   });
+
+  async function reloadRatings() {
+    if (!prof) return;
+    try { ratings = await listRatings(prof.user_id); prof = await getPublicProfile(prof.user_id); } catch { /* egal */ }
+  }
+  async function submitRating() {
+    if (!prof || myStars < 1) return;
+    rateBusy = true; rateMsg = '';
+    try { await rateUser(prof.user_id, myStars, myComment); rateMsg = 'Bewertung gespeichert ✓'; await reloadRatings(); }
+    catch (e) { rateMsg = (e as Error).message; } finally { rateBusy = false; }
+  }
+  async function removeRating() {
+    if (!prof) return;
+    rateBusy = true; rateMsg = '';
+    try { await deleteRating(prof.user_id); myStars = 0; myComment = ''; rateMsg = 'Bewertung entfernt.'; await reloadRatings(); }
+    catch (e) { rateMsg = (e as Error).message; } finally { rateBusy = false; }
+  }
 
   function close() { profileView.close(); }
   function onkey(e: KeyboardEvent) { if (e.key === 'Escape') close(); }
@@ -56,6 +86,7 @@
               <span class="stat">★ {prof.fb_avg ?? '–'} ({prof.fb_count})</span>
               {#if prof.fb_recommend_pct != null}<span class="stat">{prof.fb_recommend_pct}% Weiterempfehlung</span>{/if}
             {/if}
+            {#if prof.rating_count != null && prof.rating_count > 0}<span class="stat">Sammler-Bewertung ★ {prof.rating_avg ?? '–'} ({prof.rating_count})</span>{/if}
             {#if prof.total_cards != null}<span class="stat">{prof.total_cards} Karten</span>{/if}
             {#if prof.sold_count != null && prof.sold_count > 0}<span class="stat">{prof.sold_count} verkauft</span>{/if}
           </div>
@@ -80,7 +111,7 @@
         {/if}
 
         {#if fbs.length}
-          <h3 class="oh">Bewertungen</h3>
+          <h3 class="oh">Trade-Feedback</h3>
           <div class="fblist">
             {#each fbs as f (f.trade_id + '-' + f.rater)}
               <div class="fb">
@@ -93,6 +124,41 @@
               </div>
             {/each}
           </div>
+        {/if}
+
+        <h3 class="oh">Sammler-Bewertungen</h3>
+        {#if prof.user_id !== auth.user?.id}
+          <div class="rateform">
+            <div class="ratehead">
+              <span class="ratelbl">{myRating ? 'Deine Bewertung' : 'Diesen Sammler bewerten'}</span>
+              <span class="starpick">
+                {#each [1, 2, 3, 4, 5] as n}
+                  <button type="button" class="starbtn" class:on={n <= myStars} onclick={() => (myStars = n)} aria-label={`${n} Sterne`}>★</button>
+                {/each}
+              </span>
+            </div>
+            <textarea rows="2" placeholder="Kommentar (optional)" bind:value={myComment}></textarea>
+            <div class="raterow">
+              <button class="primary" onclick={submitRating} disabled={rateBusy || myStars < 1}>{myRating ? 'Aktualisieren' : 'Bewerten'}</button>
+              {#if myRating}<button class="ghost" onclick={removeRating} disabled={rateBusy}>Löschen</button>{/if}
+              {#if rateMsg}<span class="fmsg">{rateMsg}</span>{/if}
+            </div>
+          </div>
+        {/if}
+        {#if ratings.length}
+          <div class="fblist">
+            {#each ratings as r (r.rater)}
+              <div class="fb">
+                <div class="fbhead">
+                  <span class="fbstars">{stars(r.stars)}</span>
+                  <span class="fbwho">{r.rater_name ?? 'Sammler'}{#if r.is_mine} · du{/if}</span>
+                </div>
+                {#if r.comment}<div class="fbcomment">„{r.comment}"</div>{/if}
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <div class="pad muted">Noch keine Sammler-Bewertungen.</div>
         {/if}
       {/if}
     </div>
@@ -127,4 +193,14 @@
   .fbstars { color: #f5c451; letter-spacing: 1px; }
   .fbwho { color: var(--muted); }
   .fbcomment { margin-top: 4px; font-size: 0.85rem; }
+  .rateform { background: #12151d; border: 1px solid #2a2f3a; border-radius: 10px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .ratehead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .ratelbl { color: var(--muted); font-size: 0.85rem; }
+  .starpick { display: inline-flex; gap: 2px; }
+  .starbtn { background: none; border: 0; padding: 0 1px; font-size: 1.35rem; line-height: 1; color: #3a3f4a; cursor: pointer; }
+  .starbtn.on { color: #f5c451; }
+  .rateform textarea { padding: 7px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #171a23; color: inherit; font: inherit; resize: vertical; }
+  .raterow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .raterow .primary { padding: 7px 14px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
+  .raterow .ghost { padding: 7px 12px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: #fca5a5; cursor: pointer; }
 </style>

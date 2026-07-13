@@ -4,6 +4,8 @@
   import { updateCard, sellCard } from '$lib/services/collection.service';
   import { setForSale, setSeeking } from '$lib/services/market.service';
   import { addAlert, type Direction } from '$lib/services/alerts.service';
+  import { listCardComments, addCardComment, deleteCardComment, type CardComment } from '$lib/services/cardcomments.service';
+  import { auth } from '$lib/stores/auth.svelte';
   import Flag from './Flag.svelte';
 
   const c = $derived(detail.card);
@@ -21,6 +23,33 @@
   let alertT = $state<number | null>(null);
   let alertDir = $state<Direction>('below');
   let alertMsg = $state('');
+
+  let comments = $state<CardComment[]>([]);
+  let newComment = $state('');
+  let commentBusy = $state(false);
+
+  // Kommentare laden, sobald sich die angezeigte Karte (external_id) aendert.
+  $effect(() => {
+    const cc = detail.card;
+    comments = []; newComment = '';
+    if (cc?.externalId) {
+      const game = cc.game, ext = cc.externalId;
+      (async () => { try { comments = await listCardComments(game, ext); } catch { comments = []; } })();
+    }
+  });
+
+  async function sendComment() {
+    if (!c?.externalId || !newComment.trim()) return;
+    commentBusy = true;
+    try { await addCardComment(c.game, c.externalId, newComment.trim()); newComment = ''; comments = await listCardComments(c.game, c.externalId); }
+    catch (e) { alertMsg = (e as Error).message; } finally { commentBusy = false; }
+  }
+  async function removeComment(id: number) {
+    if (!c?.externalId) return;
+    try { await deleteCardComment(id); comments = comments.filter((x) => x.id !== id); }
+    catch (e) { alertMsg = (e as Error).message; }
+  }
+  function cdt(iso: string) { try { return new Date(iso).toLocaleDateString('de-DE'); } catch { return ''; } }
 
   $effect(() => {
     const cc = detail.card;
@@ -153,6 +182,23 @@
               </div>
             </div>
           {/if}
+
+          {#if c.externalId}
+            <div class="comments">
+              <h3>Kommentare</h3>
+              {#each comments as cm (cm.id)}
+                <div class="cm">
+                  <div class="cmtop"><b>{cm.author_name ?? 'Sammler'}</b><span class="cmdate">{cdt(cm.created_at)}</span>{#if auth.user?.id === cm.user_id}<button class="cmdel" onclick={() => removeComment(cm.id)} title="Löschen">✕</button>{/if}</div>
+                  <div class="cmbody">{cm.body}</div>
+                </div>
+              {/each}
+              {#if !comments.length}<div class="muted">Noch keine Kommentare. Schreib den ersten!</div>{/if}
+              <div class="cadd">
+                <input placeholder="Kommentar zu dieser Karte…" bind:value={newComment} onkeydown={(e) => { if (e.key === 'Enter') sendComment(); }} />
+                <button class="save" onclick={sendComment} disabled={commentBusy || !newComment.trim()}>Senden</button>
+              </div>
+            </div>
+          {/if}
         </div>
       </div>
     </div>
@@ -188,4 +234,14 @@
   .arow select, .arow input { padding: 7px 9px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .sell { border-top: 1px dashed #2a2f3a; padding-top: 10px; margin-top: 6px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
   .sellbtn { padding: 8px 14px; border-radius: 8px; border: 1px solid #3a2a16; background: transparent; color: #f5c451; cursor: pointer; font-weight: 600; }
+  .comments { margin-top: 12px; border-top: 1px solid #2a2f3a; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .comments h3 { margin: 0 0 2px; font-size: 1rem; }
+  .cm { background: #12151d; border: 1px solid #2a2f3a; border-radius: 8px; padding: 8px 10px; }
+  .cmtop { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .cmtop b { color: var(--accent, #6366f1); }
+  .cmdate { color: var(--muted); }
+  .cmdel { margin-left: auto; background: none; border: 0; color: #fca5a5; cursor: pointer; }
+  .cmbody { margin-top: 3px; font-size: 0.9rem; white-space: pre-wrap; }
+  .cadd { display: flex; gap: 8px; }
+  .cadd input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; font: inherit; }
 </style>

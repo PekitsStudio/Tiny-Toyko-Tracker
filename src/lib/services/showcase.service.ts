@@ -78,3 +78,38 @@ export async function toggleLike(collectionId: number, active: boolean): Promise
 		if (error) throw new Error(error.message);
 	}
 }
+
+// --- Einer Sammlung folgen (collection_followers) ---
+export async function toggleFollow(collectionId: number, active: boolean): Promise<void> {
+	const uid = await requireUser();
+	if (active) {
+		const { error } = await supabase().from('collection_followers').delete().eq('collection_id', collectionId).eq('user_id', uid);
+		if (error) throw new Error(error.message);
+	} else {
+		const { error } = await supabase().from('collection_followers').insert({ collection_id: collectionId, user_id: uid });
+		if (error) throw new Error(error.message);
+	}
+}
+
+// --- Kommentare zu einer Sammlung (collection_comments) ---
+export interface ShowcaseComment {
+	id: number; user_id: string; author_name: string | null; author_country: string | null;
+	body: string; created_at: string;
+}
+export async function listShowcaseComments(collectionId: number): Promise<ShowcaseComment[]> {
+	return ok(await supabase().from('collection_comments')
+		.select('id, user_id, author_name, author_country, body, created_at')
+		.eq('collection_id', collectionId).order('created_at', { ascending: true }));
+}
+export async function addShowcaseComment(collectionId: number, body: string): Promise<void> {
+	const uid = await requireUser();
+	const text = body.trim();
+	if (!text) return;
+	const { error } = await supabase().from('collection_comments').insert({ collection_id: collectionId, user_id: uid, body: text });
+	if (error) throw new Error(error.message);
+}
+export async function deleteShowcaseComment(id: number): Promise<void> {
+	await requireUser();
+	const { error } = await supabase().from('collection_comments').delete().eq('id', id);
+	if (error) throw new Error(error.message);
+}
