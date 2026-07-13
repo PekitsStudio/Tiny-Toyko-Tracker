@@ -4,7 +4,7 @@
   import CollectionSection from '$lib/sections/CollectionSection.svelte';
   import MarketSection from '$lib/sections/MarketSection.svelte';
   import CommunitySection from '$lib/sections/CommunitySection.svelte';
-  import Profile from '$lib/features/profile/Profile.svelte';
+  import ProfileSection from '$lib/sections/ProfileSection.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
   import PublicProfile from '$lib/components/PublicProfile.svelte';
   import { nav } from '$lib/stores/nav.svelte';
@@ -25,7 +25,7 @@
   {:else if nav.tab === 'sammlung'}<CollectionSection />
   {:else if nav.tab === 'marktplatz'}<MarketSection />
   {:else if nav.tab === 'community'}<CommunitySection />
-  {:else}<Profile />{/if}
+  {:else}<ProfileSection />{/if}
 </main>
 
 <CardDetail />

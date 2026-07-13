@@ -4,11 +4,15 @@
   import { listMarketBySeller, type MarketCard } from '$lib/services/market.service';
   import { fmt } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
+  import { nav } from '$lib/stores/nav.svelte';
+  import { social } from '$lib/stores/social.svelte';
+  import { sendFriendRequest } from '$lib/services/social.service';
+  import { auth } from '$lib/stores/auth.svelte';
 
   let prof = $state<PublicProfile | null>(null);
   let offers = $state<MarketCard[]>([]);
   let fbs = $state<FeedbackEntry[]>([]);
-  let loading = $state(false); let err = $state('');
+  let loading = $state(false); let err = $state(''); let friendMsg = $state('');
 
   $effect(() => {
     const id = profileView.userId;
@@ -29,6 +33,8 @@
   function since(iso: string | null): string { if (!iso) return ''; try { return new Date(iso).toLocaleDateString('de-DE'); } catch { return ''; } }
   function stars(n: number): string { return '★★★★★'.slice(0, Math.max(0, Math.min(5, Math.round(n)))); }
   function openOffer(m: MarketCard) { detail.open({ game: m.game, name: m.name, imageUrl: m.image_url, setName: m.set_name, number: m.number, rarity: m.rarity, lang: m.language, price: m.asking_price, currency: m.currency, cardmarketUrl: m.cardmarket_url, condition: m.condition }); }
+  function msgUser() { if (!prof) return; social.openChat(prof.user_id, prof.name ?? 'Sammler'); nav.go('profil'); profileView.close(); }
+  async function addFriend() { if (!prof) return; friendMsg = ''; try { await sendFriendRequest(prof.user_id); friendMsg = 'Freundschaftsanfrage gesendet.'; } catch (e) { friendMsg = (e as Error).message; } }
 </script>
 
 <svelte:window onkeydown={onkey} />
@@ -56,6 +62,7 @@
           {#if prof.fav_games || prof.collector_type}<div class="meta2">{[prof.collector_type, prof.fav_games].filter(Boolean).join(' · ')}</div>{/if}
           {#if prof.bio}<p class="bio">{prof.bio}</p>{/if}
           {#if prof.contact}<div class="contact">Kontakt: {prof.contact}</div>{/if}
+          {#if prof.user_id !== auth.user?.id}<div class="pactions"><button class="primary" onclick={msgUser}>Nachricht schreiben</button><button class="ghost" onclick={addFriend}>+ Freund</button>{#if friendMsg}<span class="fmsg">{friendMsg}</span>{/if}</div>{/if}
         </div>
 
         <h3 class="oh">Angebote ({offers.length})</h3>
@@ -103,6 +110,10 @@
   .stat { background: #12151d; border: 1px solid #2a2f3a; border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; }
   .meta2 { color: var(--muted); font-size: 0.85rem; }
   .bio { margin: 10px 0; } .contact { color: var(--accent, #6366f1); font-size: 0.85rem; }
+  .pactions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .pactions .primary { padding: 8px 14px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
+  .pactions .ghost { padding: 8px 14px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: inherit; cursor: pointer; }
+  .fmsg { color: #86efac; font-size: 0.82rem; }
   .oh { margin: 18px 0 10px; font-size: 1rem; }
   .ogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
   .ocard { background: #12151d; border: 1px solid #2a2f3a; border-radius: 10px; padding: 8px; cursor: pointer; color: inherit; text-align: left; }
