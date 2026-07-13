@@ -44,7 +44,7 @@
       <div class="num gold">{fmt(value)}</div>
       <div class="sub">{cardCount} Karten</div>
     </button>
-    <button class="stat" onclick={() => nav.go('wunschliste')}>
+    <button class="stat" onclick={() => nav.go('sammlung')}>
       <div class="label">Wunschliste</div>
       <div class="num">{wishCount}</div>
     </button>

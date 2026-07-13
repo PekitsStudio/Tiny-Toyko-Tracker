@@ -9,8 +9,10 @@
   import { GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
 
+  let { only }: { only?: 'meine' | 'entdecken' } = $props();
+
   const VIS: Record<Visibility, string> = { private: 'Privat', unlisted: 'Per Link', public: 'Öffentlich' };
-  let mode = $state<'meine' | 'entdecken'>('meine');
+  let mode = $state<'meine' | 'entdecken'>(only ?? 'meine');
   let list = $state<Showcase[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state(false);
 
@@ -76,10 +78,12 @@
 
 {#if !sc}
   <div class="coll-head">
-    <div class="modes">
-      <button class:active={mode === 'meine'} onclick={() => switchMode('meine')}>Meine</button>
-      <button class:active={mode === 'entdecken'} onclick={() => switchMode('entdecken')}>Entdecken</button>
-    </div>
+    {#if !only}
+      <div class="modes">
+        <button class:active={mode === 'meine'} onclick={() => switchMode('meine')}>Meine</button>
+        <button class:active={mode === 'entdecken'} onclick={() => switchMode('entdecken')}>Entdecken</button>
+      </div>
+    {:else}<div></div>{/if}
     {#if mode === 'meine'}<button class="primary" onclick={() => (showCreate = !showCreate)}>{showCreate ? 'Abbrechen' : '+ Neue Sammlung'}</button>{/if}
   </div>
 

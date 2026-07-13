@@ -8,11 +8,13 @@
   import { profileView } from '$lib/stores/profileview.svelte';
   import { nav } from '$lib/stores/nav.svelte';
 
+  let { only }: { only?: 'angebote' | 'suche' } = $props();
+
   const GAMES = [
     { id: '', label: 'Alle' }, { id: 'pokemon', label: 'Pokémon' }, { id: 'magic', label: 'Magic' },
     { id: 'yugioh', label: 'Yu-Gi-Oh' }, { id: 'onepiece', label: 'One Piece' }
   ];
-  let mode = $state<'angebote' | 'suche'>('angebote');
+  let mode = $state<'angebote' | 'suche'>(only ?? 'angebote');
   let game = $state(''); let q = $state('');
   let offers = $state<MarketCard[]>([]); let seeks = $state<SeekingCard[]>([]);
   let status = $state(''); let loading = $state(false);
@@ -37,17 +39,19 @@
     buying = m.id; buyMsg = '';
     try {
       await createTrade({ responder: m.seller_id, cardId: m.id, cardName: m.name, cardGame: m.game, price: m.asking_price, currency: m.currency });
-      buyMsg = `Kaufanfrage gesendet — im Reiter „Handel" verfolgen.`;
+      buyMsg = `Kaufanfrage gesendet — unter Marktplatz → Handel verfolgen.`;
     } catch (e) { buyMsg = (e as Error).message; }
     finally { buying = null; }
   }
 </script>
 
 <div class="coll-head">
-  <div class="modes">
-    <button class:active={mode === 'angebote'} onclick={() => { mode = 'angebote'; load(); }}>Angebote</button>
-    <button class:active={mode === 'suche'} onclick={() => { mode = 'suche'; load(); }}>Suche</button>
-  </div>
+  {#if !only}
+    <div class="modes">
+      <button class:active={mode === 'angebote'} onclick={() => { mode = 'angebote'; load(); }}>Angebote</button>
+      <button class:active={mode === 'suche'} onclick={() => { mode = 'suche'; load(); }}>Suche</button>
+    </div>
+  {:else}<div></div>{/if}
   <div class="muted">{mode === 'angebote' ? offers.length + ' Angebote' : seeks.length + ' Gesuche'}</div>
 </div>
 
@@ -57,7 +61,7 @@
   <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : 'Suchen'}</button>
 </div>
 
-{#if buyMsg}<div class="buymsg">{buyMsg} <button class="link" onclick={() => nav.go('handel')}>Zum Handel →</button></div>{/if}
+{#if buyMsg}<div class="buymsg">{buyMsg} <button class="link" onclick={() => nav.go('marktplatz')}>Zum Marktplatz →</button></div>{/if}
 {#if status}<div class="hint">{status}</div>{/if}
 
 <div class="grid">
