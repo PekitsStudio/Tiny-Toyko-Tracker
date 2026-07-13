@@ -4,7 +4,8 @@
 	"version": "0.0.1",
 	"type": "module",
 	"dependencies": {
-		"@supabase/supabase-js": "^2.58.0"
+		"@supabase/supabase-js": "^2.58.0",
+		"xlsx": "^0.18.5"
 	},
 	"scripts": {
 		"dev": "vite dev",
