@@ -5,7 +5,8 @@
   import Sold from '$lib/features/sold/Sold.svelte';
   import Showcases from '$lib/features/showcase/Showcases.svelte';
   import Statistik from '$lib/features/stats/Statistik.svelte';
-  let sub = $state<'sammlung' | 'wunschliste' | 'extras' | 'verkauft' | 'showcases' | 'statistik'>('sammlung');
+  import Export from '$lib/features/exporting/Export.svelte';
+  let sub = $state<'sammlung' | 'wunschliste' | 'extras' | 'verkauft' | 'showcases' | 'statistik' | 'export'>('sammlung');
 </script>
 
 <div class="subnav">
@@ -15,6 +16,7 @@
   <button class:active={sub === 'verkauft'} onclick={() => (sub = 'verkauft')}>Verkauft</button>
   <button class:active={sub === 'showcases'} onclick={() => (sub = 'showcases')}>Showcases</button>
   <button class:active={sub === 'statistik'} onclick={() => (sub = 'statistik')}>Statistik</button>
+  <button class:active={sub === 'export'} onclick={() => (sub = 'export')}>Exportieren</button>
 </div>
 
 {#if sub === 'sammlung'}<Collection />
@@ -22,7 +24,8 @@
 {:else if sub === 'extras'}<Extras />
 {:else if sub === 'verkauft'}<Sold />
 {:else if sub === 'showcases'}<Showcases only="meine" />
-{:else}<Statistik />{/if}
+{:else if sub === 'statistik'}<Statistik />
+{:else}<Export />{/if}
 
 <style>
   .subnav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
