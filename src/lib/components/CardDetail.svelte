@@ -7,6 +7,7 @@
   import { listCardComments, addCardComment, deleteCardComment, type CardComment } from '$lib/services/cardcomments.service';
   import { auth } from '$lib/stores/auth.svelte';
   import Flag from './Flag.svelte';
+  import CountryFlag from './CountryFlag.svelte';
 
   const c = $derived(detail.card);
   const CONDITIONS = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO'];
@@ -49,7 +50,7 @@
     try { await deleteCardComment(id); comments = comments.filter((x) => x.id !== id); }
     catch (e) { alertMsg = (e as Error).message; }
   }
-  function cdt(iso: string) { try { return new Date(iso).toLocaleDateString('de-DE'); } catch { return ''; } }
+  function cdt(iso: string) { try { return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } }
 
   $effect(() => {
     const cc = detail.card;
@@ -185,11 +186,11 @@
 
           {#if c.externalId}
             <div class="comments">
-              <h3>Kommentare</h3>
+              <h3>💬 Kommentare</h3>
               {#each comments as cm (cm.id)}
-                <div class="cm">
-                  <div class="cmtop"><b>{cm.author_name ?? 'Sammler'}</b><span class="cmdate">{cdt(cm.created_at)}</span>{#if auth.user?.id === cm.user_id}<button class="cmdel" onclick={() => removeComment(cm.id)} title="Löschen">✕</button>{/if}</div>
-                  <div class="cmbody">{cm.body}</div>
+                <div class="dt-comment">
+                  <div class="dc-head"><CountryFlag country={cm.author_country} /><b>{cm.author_name ?? 'Sammler'}</b> · {cdt(cm.created_at)}{#if auth.user?.id === cm.user_id}<button class="cmdel" onclick={() => removeComment(cm.id)} title="Löschen">✕</button>{/if}</div>
+                  <div class="dc-body">{cm.body}</div>
                 </div>
               {/each}
               {#if !comments.length}<div class="muted">Noch keine Kommentare. Schreib den ersten!</div>{/if}
@@ -236,12 +237,11 @@
   .sellbtn { padding: 8px 14px; border-radius: 8px; border: 1px solid #3a2a16; background: transparent; color: #f5c451; cursor: pointer; font-weight: 600; }
   .comments { margin-top: 12px; border-top: 1px solid #2a2f3a; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
   .comments h3 { margin: 0 0 2px; font-size: 1rem; }
-  .cm { background: #12151d; border: 1px solid #2a2f3a; border-radius: 8px; padding: 8px 10px; }
-  .cmtop { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
-  .cmtop b { color: var(--accent, #6366f1); }
-  .cmdate { color: var(--muted); }
+  .dt-comment { background: #12151d; border: 1px solid #2a2f3a; border-radius: 10px; padding: 8px 10px; }
+  .dc-head { display: flex; align-items: center; font-size: 0.78rem; color: var(--muted); margin-bottom: 3px; }
+  .dc-head b { color: var(--accent, #6366f1); margin-right: 4px; }
   .cmdel { margin-left: auto; background: none; border: 0; color: #fca5a5; cursor: pointer; }
-  .cmbody { margin-top: 3px; font-size: 0.9rem; white-space: pre-wrap; }
+  .dc-body { white-space: pre-wrap; word-break: break-word; font-size: 0.9rem; }
   .cadd { display: flex; gap: 8px; }
   .cadd input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; font: inherit; }
 </style>

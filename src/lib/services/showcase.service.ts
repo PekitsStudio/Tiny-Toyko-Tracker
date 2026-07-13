@@ -13,10 +13,14 @@ function ok<T>(res: { data: T | null; error: { message?: string } | null }): T {
 
 export type Visibility = 'private' | 'unlisted' | 'public';
 
+export type ReactionKind = 'like' | 'fire' | 'gem' | 'save';
+
 export interface Showcase {
-	id: number; user_id: string; author_name: string | null; name: string; description: string | null;
+	id: number; user_id: string; author_name: string | null; author_country: string | null;
+	name: string; description: string | null; created_at: string | null;
 	visibility: Visibility; game: string | null; cover: string | null; card_count: number;
-	like_count: number; comment_count: number; follower_count: number;
+	like_count: number; fire_count: number; gem_count: number; save_count: number;
+	comment_count: number; follower_count: number;
 	followed: boolean; is_mine: boolean; my_reactions: string[] | null;
 }
 export interface ShowcaseCard {
@@ -68,15 +72,20 @@ export async function removeShowcaseCard(rowId: number): Promise<void> {
 	const { error } = await supabase().from('collection_cards').delete().eq('id', rowId);
 	if (error) throw new Error(error.message);
 }
-export async function toggleLike(collectionId: number, active: boolean): Promise<void> {
+// Reaktion umschalten (like / fire / gem / save). active = ist aktuell gesetzt.
+export async function toggleReaction(collectionId: number, kind: ReactionKind, active: boolean): Promise<void> {
 	const uid = await requireUser();
 	if (active) {
-		const { error } = await supabase().from('collection_reactions').delete().eq('collection_id', collectionId).eq('user_id', uid).eq('kind', 'like');
+		const { error } = await supabase().from('collection_reactions').delete().eq('collection_id', collectionId).eq('user_id', uid).eq('kind', kind);
 		if (error) throw new Error(error.message);
 	} else {
-		const { error } = await supabase().from('collection_reactions').insert({ collection_id: collectionId, user_id: uid, kind: 'like' });
+		const { error } = await supabase().from('collection_reactions').insert({ collection_id: collectionId, user_id: uid, kind });
 		if (error) throw new Error(error.message);
 	}
+}
+// Rueckwaertskompatibel: Like ist nur eine spezielle Reaktion.
+export async function toggleLike(collectionId: number, active: boolean): Promise<void> {
+	return toggleReaction(collectionId, 'like', active);
 }
 
 // --- Einer Sammlung folgen (collection_followers) ---
