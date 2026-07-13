@@ -31,7 +31,7 @@
       game: w.game, name: w.name, imageUrl: w.image_url, setName: w.set_name, number: w.number,
       rarity: w.rarity, lang: w.language, price: w.price_current, priceLow: w.price_low,
       priceTrend: w.price_trend, currency: w.currency, cardmarketUrl: w.cardmarket_url,
-      wishlistId: w.id, seeking: w.seeking, seekMaxPrice: w.seek_max_price
+      wishlistId: w.id, seeking: w.seeking, seekMaxPrice: w.seek_max_price, externalId: w.external_id ?? undefined
     });
   }
 </script>

@@ -3,6 +3,7 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import { updateCard, sellCard } from '$lib/services/collection.service';
   import { setForSale, setSeeking } from '$lib/services/market.service';
+  import { addAlert, type Direction } from '$lib/services/alerts.service';
   import Flag from './Flag.svelte';
 
   const c = $derived(detail.card);
@@ -17,6 +18,9 @@
   let soldPrice = $state<number | null>(null);
   let saving = $state(false);
   let savedMsg = $state('');
+  let alertT = $state<number | null>(null);
+  let alertDir = $state<Direction>('below');
+  let alertMsg = $state('');
 
   $effect(() => {
     const cc = detail.card;
@@ -34,6 +38,11 @@
     }
   });
 
+  async function saveAlert() {
+    if (!c?.externalId || alertT == null) return;
+    try { await addAlert({ game: c.game, externalId: c.externalId, name: c.name, setName: c.setName, imageUrl: c.imageUrl, language: c.lang, currency: c.currency, targetPrice: alertT, direction: alertDir }); alertMsg = 'Preisalarm gesetzt ✓'; alertT = null; }
+    catch (e) { alertMsg = (e as Error).message; }
+  }
   function close() { detail.close(); }
   function onkey(e: KeyboardEvent) { if (e.key === 'Escape') close(); }
 
@@ -95,6 +104,17 @@
             {#if c.priceTrend != null}<div class="muted">Trend {fmt(c.priceTrend, c.currency ?? 'EUR')}</div>{/if}
           </div>
           {#if c.cardmarketUrl}<a href={c.cardmarketUrl} target="_blank" rel="noopener" class="cm">Auf Cardmarket ansehen ↗</a>{/if}
+          {#if c.externalId}
+            <div class="alert">
+              <h3>Preisalarm</h3>
+              <div class="arow">
+                <select bind:value={alertDir}><option value="below">fällt auf/unter</option><option value="above">steigt auf/über</option></select>
+                <input type="number" min="0" step="0.01" placeholder="Preis" bind:value={alertT} />
+                <button class="save" onclick={saveAlert} disabled={alertT == null}>Setzen</button>
+              </div>
+              {#if alertMsg}<span class="saved">{alertMsg}</span>{/if}
+            </div>
+          {/if}
 
           {#if c.cardId}
             <div class="edit">
@@ -162,6 +182,10 @@
   .saverow { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .save { padding: 8px 16px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
   .saved { color: #86efac; font-size: 0.85rem; }
+  .alert { margin-top: 12px; border-top: 1px solid #2a2f3a; padding-top: 12px; }
+  .alert h3 { margin: 0 0 8px; font-size: 1rem; }
+  .arow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .arow select, .arow input { padding: 7px 9px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .sell { border-top: 1px dashed #2a2f3a; padding-top: 10px; margin-top: 6px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
   .sellbtn { padding: 8px 14px; border-radius: 8px; border: 1px solid #3a2a16; background: transparent; color: #f5c451; cursor: pointer; font-weight: 600; }
 </style>

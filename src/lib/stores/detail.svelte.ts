@@ -23,6 +23,7 @@ export interface DetailCard {
 	wishlistId?: number; // Wunschlisten-Karte -> oeffentlich suchen
 	seeking?: boolean | null;
 	seekMaxPrice?: number | null;
+	externalId?: string;
 }
 
 class DetailStore {

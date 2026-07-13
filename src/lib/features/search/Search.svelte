@@ -134,7 +134,7 @@
     detail.open({
       game: c.game, name: c.name, imageUrl: c.imageUrl, setName: c.setName, number: c.number,
       rarity: c.rarity, lang: c.lang, price: c.cardmarketPrice, priceLow: c.priceLow,
-      priceTrend: c.priceTrend, currency: c.currency, cardmarketUrl: c.cardmarketUrl
+      priceTrend: c.priceTrend, currency: c.currency, cardmarketUrl: c.cardmarketUrl, externalId: c.externalId
     });
   }
 </script>

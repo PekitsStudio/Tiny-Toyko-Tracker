@@ -109,6 +109,7 @@ export interface CollectionCard {
 	asking_price: number | null;
 	purchase_price: number | null;
 	purchase_date: string | null;
+	external_id: string | null;
 }
 
 export async function listCards(): Promise<CollectionCard[]> {
@@ -117,7 +118,7 @@ export async function listCards(): Promise<CollectionCard[]> {
 		await supabase()
 			.from('cards')
 			.select(
-				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency, notes, for_sale, asking_price, purchase_price, purchase_date'
+				'id, game, name, set_name, number, rarity, image_url, quantity, condition, language, price_current, currency, notes, for_sale, asking_price, purchase_price, purchase_date, external_id'
 			)
 			.eq('status', 'owned')
 			.order('added_at', { ascending: false })
@@ -169,6 +170,7 @@ export interface WishlistItem {
 	seeking: boolean | null;
 	seek_max_price: number | null;
 	seek_currency: string | null;
+	external_id: string | null;
 }
 
 export async function listWishlist(): Promise<WishlistItem[]> {
@@ -177,7 +179,7 @@ export async function listWishlist(): Promise<WishlistItem[]> {
 		await supabase()
 			.from('wishlist')
 			.select(
-				'id, game, name, set_name, number, rarity, image_url, language, price_current, price_low, price_trend, currency, cardmarket_url, seeking, seek_max_price, seek_currency'
+				'id, game, name, set_name, number, rarity, image_url, language, price_current, price_low, price_trend, currency, cardmarket_url, seeking, seek_max_price, seek_currency, external_id'
 			)
 			.order('id', { ascending: false })
 	);
