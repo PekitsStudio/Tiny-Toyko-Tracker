@@ -4,9 +4,9 @@ create or replace view market_cards as
          c.asking_price, c.currency, c.price_current,
          coalesce(nullif(trim(u.display_name), ''), 'Sammler') as seller_name,
          nullif(trim(u.contact), '') as seller_contact,
+         (c.user_id = auth.uid()) as is_mine,
          nullif(trim(u.country), '') as seller_country,
-         c.user_id as seller_id,
-         (c.user_id = auth.uid()) as is_mine
+         c.user_id as seller_id
   from cards c
   left join user_settings u on u.user_id = c.user_id
   where c.for_sale = true and c.status = 'owned';
