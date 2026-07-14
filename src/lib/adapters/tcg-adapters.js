@@ -67,6 +67,21 @@
   // Preis > 0 oder null -- "0.00" bedeutet bei den Quellen "kein Preis erfasst".
   function posOrNull(v) { const n = num(v); return n != null && n > 0 ? n : null; }
 
+  // --- PokemonPriceTracker-API-Key (aus den Einstellungen gesetzt) -------------
+  // Wird beim App-Start via Adapters.setPokePriceKey(...) gefuellt. Dient sowohl
+  // dem Graded-Modul als auch den japanischen Kartenpreisen.
+  let _ppKey = '';
+  function setPokePriceKey(k) { _ppKey = k ? String(k).trim() : ''; }
+  function ppKey() { return _ppKey; }
+
+  // Endpoint der Edge Function fuer japanische Preise (gemeinsamer Server-Cache).
+  // Wird beim App-Start via Adapters.setJpPriceConfig(url, anonKey) gesetzt.
+  let _jpUrl = '', _jpAnon = '';
+  function setJpPriceConfig(baseUrl, anonKey) {
+    _jpUrl = baseUrl ? String(baseUrl).replace(/\/+$/, '') : '';
+    _jpAnon = anonKey ? String(anonKey) : '';
+  }
+
   function cmSearchUrl(game, name) {
     const path = { pokemon: 'Pokemon', yugioh: 'YuGiOh', onepiece: 'One-Piece' }[game] || 'Pokemon';
     return `https://www.cardmarket.com/de/${path}/Products/Search?searchString=${encodeURIComponent(name)}`;
@@ -323,6 +338,28 @@
       }
     }
     return { price, low, trend, currency };
+  }
+
+  // Japanische Pokemon-Preise ueber die Edge Function "jp-price" (gemeinsamer
+  // Server-Cache + geheimer PPT-Key). TCGdex hat fuer japanische Sets kaum/falsche
+  // Cardmarket-Daten. Ist der Endpoint nicht gesetzt oder liefert keinen Preis,
+  // wird null zurueckgegeben (Aufrufer faellt auf TCGdex zurueck).
+  async function jpPokePrice(info) {
+    if (!_jpUrl || !info || !info.externalId) return null;
+    const p = new URLSearchParams({
+      external_id: String(info.externalId),
+      name: info.name ? String(info.name) : '',
+      number: info.number != null ? String(info.number) : ''
+    });
+    let data;
+    try {
+      data = await get(`${_jpUrl}/functions/v1/jp-price?${p.toString()}`, {
+        apikey: _jpAnon, Authorization: `Bearer ${_jpAnon}`
+      });
+    } catch { return null; }
+    const price = posOrNull(data && data.price);
+    if (price == null) return null;
+    return { price, low: posOrNull(data && data.low), trend: null, currency: (data && data.currency) || 'USD' };
   }
 
   // Kartendetail laden -- mit Sprach-Fallback: Karten aus rein englischen oder
@@ -694,7 +731,7 @@
   }
 
   async function searchGraded(q) {
-    const key = await globalThis.DB.getSetting('pokepriceApiKey');
+    const key = ppKey();
     if (!key) {
       const err = new Error('Für gegradete Karten fehlt der API-Key. Hol dir einen kostenlosen Key auf pokemonpricetracker.com und trag ihn unter Einstellungen ein.');
       err.code = 'NO_KEY';
@@ -729,6 +766,13 @@
         const locale = langFor('pokemon', opts.lang);
         const d = await getPokeCard(externalId, locale);
         if (!d) return { price: null, low: null, trend: null };
+        // Japanische Karten: TCGdex-Cardmarket-Daten sind hier unzuverlaessig ->
+        // bessere Preise ueber die Edge Function (Server-Cache). Faellt bei
+        // fehlendem Endpoint/Preis automatisch auf TCGdex zurueck.
+        if (locale === 'ja') {
+          const jp = await jpPokePrice({ externalId, name: d.name, number: d.localId });
+          if (jp && jp.price != null) return jp;
+        }
         return pokePricing(d);
       }
       if (game === 'magic') {
@@ -755,4 +799,4 @@
     return { price: null, low: null, trend: null };
   }
   const SUPPORTED_GAMES = Object.keys(GAMES);
-  export const Adapters = { LANGUAGES, NUMBER_SEARCH, SUPPORTED_GAMES, langFor, search, fetchPrices, enrichPokemon, searchGraded, searchSets, onePieceNames };
+  export const Adapters = { LANGUAGES, NUMBER_SEARCH, SUPPORTED_GAMES, langFor, search, fetchPrices, enrichPokemon, searchGraded, searchSets, onePieceNames, setPokePriceKey, setJpPriceConfig };

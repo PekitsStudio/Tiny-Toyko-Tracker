@@ -9,12 +9,15 @@
 	import AuthBar from '$lib/components/AuthBar.svelte';
 	import Legal from '$lib/components/Legal.svelte';
 	import { legal } from '$lib/stores/legal.svelte';
+	import { loadApiKeyIntoAdapter, initPricing } from '$lib/services/settings.service';
 	import '../app.css';
 
 	let { children } = $props();
 
-	onMount(() => {
-		auth.init();
+	onMount(async () => {
+		initPricing();
+		await auth.init();
+		loadApiKeyIntoAdapter();
 	});
 </script>
 
