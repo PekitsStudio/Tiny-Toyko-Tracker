@@ -8,11 +8,18 @@
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
   let showAdd = $state(false);
   let editingId = $state<number | null>(null);
+  let customType = $state('');
+  let typeFilter = $state('');
 
   const GAMES = ['pokemon', 'magic', 'yugioh', 'onepiece'];
   const COMPANIES = ['PSA', 'BGS', 'CGC', 'SGC', 'Andere'];
+  const SEALED_TYPES = [
+    'Display / Booster Box', 'Elite Trainer Box (ETB)', 'Booster-Bundle', 'Booster Pack',
+    'Blister', 'Build & Battle Box', 'Tin', 'Mini-Tin', 'Collection Box',
+    'Premium Collection', 'Starter-/Theme-Deck', 'Case', 'Adventskalender'
+  ];
 
-  let sf = $state({ name: '', game: 'pokemon', product_type: 'Display', set_name: '', quantity: 1, purchase_price: null as number | null, current_value: null as number | null });
+  let sf = $state({ name: '', game: 'pokemon', product_type: 'Display / Booster Box', set_name: '', quantity: 1, purchase_price: null as number | null, current_value: null as number | null });
   let gf = $state({ name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null as number | null, purchase_price: null as number | null });
 
   async function load() {
@@ -26,8 +33,14 @@
 
   const sealedTotal = $derived(sealed.reduce((s, x) => s + (x.current_value ?? 0) * (x.quantity ?? 1), 0));
   const gradedTotal = $derived(graded.reduce((s, x) => s + (x.value ?? 0), 0));
+  const filteredSealed = $derived(typeFilter ? sealed.filter((x) => (x.product_type || '') === typeFilter) : sealed);
+  const sealedTypeCounts = $derived.by(() => {
+    const m = new Map<string, number>();
+    for (const x of sealed) { const t = x.product_type || '—'; m.set(t, (m.get(t) ?? 0) + 1); }
+    return [...m.entries()].map(([type, n]) => ({ type, n })).sort((a, b) => a.type.localeCompare(b.type));
+  });
 
-  function resetSealedForm() { sf = { name: '', game: 'pokemon', product_type: 'Display', set_name: '', quantity: 1, purchase_price: null, current_value: null }; }
+  function resetSealedForm() { sf = { name: '', game: 'pokemon', product_type: 'Display / Booster Box', set_name: '', quantity: 1, purchase_price: null, current_value: null }; customType = ''; }
   function resetGradedForm() { gf = { name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null, purchase_price: null }; }
   function toggleAdd() {
     if (showAdd) { showAdd = false; editingId = null; return; }
@@ -35,7 +48,9 @@
   }
   function startEditSealed(x: SealedItem) {
     editingId = x.id;
-    sf = { name: x.name, game: x.game, product_type: x.product_type, set_name: x.set_name ?? '', quantity: x.quantity ?? 1, purchase_price: x.purchase_price ?? null, current_value: x.current_value ?? null };
+    const known = SEALED_TYPES.includes(x.product_type);
+    customType = known ? '' : (x.product_type || '');
+    sf = { name: x.name, game: x.game, product_type: known ? x.product_type : '__custom__', set_name: x.set_name ?? '', quantity: x.quantity ?? 1, purchase_price: x.purchase_price ?? null, current_value: x.current_value ?? null };
     showAdd = true;
   }
   function startEditGraded(x: GradedCard) {
@@ -44,9 +59,11 @@
     showAdd = true;
   }
   async function submitSealed() {
-    if (!sf.name.trim()) return; busy = -1;
+    if (!sf.name.trim()) return;
+    const product_type = sf.product_type === '__custom__' ? (customType.trim() || 'Sonstiges') : sf.product_type;
+    busy = -1;
     try {
-      const data = { ...sf, name: sf.name.trim() };
+      const data = { ...sf, name: sf.name.trim(), product_type };
       if (editingId != null) await updateSealed(editingId, data); else await addSealed(data);
       showAdd = false; editingId = null; resetSealedForm(); await load();
     } catch (e) { status = (e as Error).message; } finally { busy = null; }
@@ -81,7 +98,13 @@
       <div class="grid2">
         <label>Name<input bind:value={sf.name} placeholder="z. B. Display Obsidian Flames" /></label>
         <label>Spiel<select bind:value={sf.game}>{#each GAMES as g}<option value={g}>{GAME_LABEL[g] ?? g}</option>{/each}</select></label>
-        <label>Produkttyp<input bind:value={sf.product_type} placeholder="Display, ETB, Booster…" /></label>
+        <label>Produkttyp
+          <select bind:value={sf.product_type}>
+            {#each SEALED_TYPES as t}<option value={t}>{t}</option>{/each}
+            <option value="__custom__">Sonstiges…</option>
+          </select>
+        </label>
+        {#if sf.product_type === '__custom__'}<label>Eigener Typ<input bind:value={customType} placeholder="z. B. Sammelkoffer" /></label>{/if}
         <label>Set<input bind:value={sf.set_name} placeholder="Set-Name (optional)" /></label>
         <label>Menge<input type="number" min="1" bind:value={sf.quantity} /></label>
         <label>Kaufpreis (€)<input type="number" min="0" step="0.01" bind:value={sf.purchase_price} /></label>
@@ -108,8 +131,19 @@
 
 {#if mode === 'sealed'}
   {#if !sealed.length && !loading}<div class="hint">Noch keine versiegelten Produkte.</div>{/if}
+  {#if sealed.length}
+    <div class="filterbar">
+      <label>Typ filtern
+        <select bind:value={typeFilter}>
+          <option value="">Alle ({sealed.length})</option>
+          {#each sealedTypeCounts as t (t.type)}<option value={t.type}>{t.type} ({t.n})</option>{/each}
+        </select>
+      </label>
+    </div>
+  {/if}
+  {#if typeFilter && !filteredSealed.length}<div class="hint">Keine Produkte mit diesem Typ.</div>{/if}
   <div class="list">
-    {#each sealed as x (x.id)}
+    {#each filteredSealed as x (x.id)}
       <div class="row" class:busy={busy === x.id}>
         <div><div class="rn">{x.name}</div><div class="rs">{GAME_LABEL[x.game] ?? x.game} · {x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div></div>
         <div class="rv">
@@ -152,6 +186,9 @@
   .addform input, .addform select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .addform .primary { align-self: flex-start; }
   .formtitle { font-weight: 700; font-size: 0.95rem; color: var(--text, #e7e9ee); }
+  .filterbar { margin-bottom: 12px; }
+  .filterbar label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted, #9aa0ad); }
+  .filterbar select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .list { display: flex; flex-direction: column; gap: 8px; }
   .row { display: flex; align-items: center; gap: 14px; background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 10px; padding: 12px 14px; }
   .row.busy { opacity: 0.55; pointer-events: none; }
