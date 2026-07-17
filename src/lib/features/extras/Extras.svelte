@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { listSealed, addSealed, deleteSealed, listGraded, addGraded, deleteGraded, type SealedItem, type GradedCard } from '$lib/services/extras.service';
+  import { listSealed, addSealed, updateSealed, deleteSealed, listGraded, addGraded, updateGraded, deleteGraded, type SealedItem, type GradedCard } from '$lib/services/extras.service';
   import { fmt, GAME_LABEL } from '$lib/format';
 
   let mode = $state<'sealed' | 'graded'>('sealed');
   let sealed = $state<SealedItem[]>([]); let graded = $state<GradedCard[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
   let showAdd = $state(false);
+  let editingId = $state<number | null>(null);
 
   const GAMES = ['pokemon', 'magic', 'yugioh', 'onepiece'];
   const COMPANIES = ['PSA', 'BGS', 'CGC', 'SGC', 'Andere'];
@@ -26,15 +27,37 @@
   const sealedTotal = $derived(sealed.reduce((s, x) => s + (x.current_value ?? 0) * (x.quantity ?? 1), 0));
   const gradedTotal = $derived(graded.reduce((s, x) => s + (x.value ?? 0), 0));
 
+  function resetSealedForm() { sf = { name: '', game: 'pokemon', product_type: 'Display', set_name: '', quantity: 1, purchase_price: null, current_value: null }; }
+  function resetGradedForm() { gf = { name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null, purchase_price: null }; }
+  function toggleAdd() {
+    if (showAdd) { showAdd = false; editingId = null; return; }
+    editingId = null; resetSealedForm(); resetGradedForm(); showAdd = true;
+  }
+  function startEditSealed(x: SealedItem) {
+    editingId = x.id;
+    sf = { name: x.name, game: x.game, product_type: x.product_type, set_name: x.set_name ?? '', quantity: x.quantity ?? 1, purchase_price: x.purchase_price ?? null, current_value: x.current_value ?? null };
+    showAdd = true;
+  }
+  function startEditGraded(x: GradedCard) {
+    editingId = x.id;
+    gf = { name: x.name, set_name: x.set_name ?? '', number: x.number ?? '', company: x.company, grade: x.grade, cert: x.cert ?? '', value: x.value ?? null, purchase_price: x.purchase_price ?? null };
+    showAdd = true;
+  }
   async function submitSealed() {
     if (!sf.name.trim()) return; busy = -1;
-    try { await addSealed({ ...sf, name: sf.name.trim() }); showAdd = false; sf = { name: '', game: 'pokemon', product_type: 'Display', set_name: '', quantity: 1, purchase_price: null, current_value: null }; await load(); }
-    catch (e) { status = (e as Error).message; } finally { busy = null; }
+    try {
+      const data = { ...sf, name: sf.name.trim() };
+      if (editingId != null) await updateSealed(editingId, data); else await addSealed(data);
+      showAdd = false; editingId = null; resetSealedForm(); await load();
+    } catch (e) { status = (e as Error).message; } finally { busy = null; }
   }
   async function submitGraded() {
     if (!gf.name.trim() || !gf.grade.trim()) return; busy = -1;
-    try { await addGraded({ ...gf, name: gf.name.trim() }); showAdd = false; gf = { name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null, purchase_price: null }; await load(); }
-    catch (e) { status = (e as Error).message; } finally { busy = null; }
+    try {
+      const data = { ...gf, name: gf.name.trim() };
+      if (editingId != null) await updateGraded(editingId, data); else await addGraded(data);
+      showAdd = false; editingId = null; resetGradedForm(); await load();
+    } catch (e) { status = (e as Error).message; } finally { busy = null; }
   }
   async function delSealed(x: SealedItem) { if (!confirm(`„${x.name}" löschen?`)) return; busy = x.id; try { await deleteSealed(x.id); sealed = sealed.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
   async function delGraded(x: GradedCard) { if (!confirm(`„${x.name}" löschen?`)) return; busy = x.id; try { await deleteGraded(x.id); graded = graded.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
@@ -47,12 +70,13 @@
   </div>
   <div class="right">
     <span class="muted">{mode === 'sealed' ? sealed.length + ' Produkte · ' + fmt(sealedTotal) : graded.length + ' Karten · ' + fmt(gradedTotal, 'USD')}</span>
-    <button class="primary" onclick={() => (showAdd = !showAdd)}>{showAdd ? 'Abbrechen' : '+ Hinzufügen'}</button>
+    <button class="primary" onclick={toggleAdd}>{showAdd ? 'Abbrechen' : '+ Hinzufügen'}</button>
   </div>
 </div>
 
 {#if showAdd}
   <div class="addform">
+    <div class="formtitle">{editingId != null ? '✎ Bearbeiten' : '+ Neu hinzufügen'}</div>
     {#if mode === 'sealed'}
       <div class="grid2">
         <label>Name<input bind:value={sf.name} placeholder="z. B. Display Obsidian Flames" /></label>
@@ -63,7 +87,7 @@
         <label>Kaufpreis (€)<input type="number" min="0" step="0.01" bind:value={sf.purchase_price} /></label>
         <label>Aktueller Wert (€)<input type="number" min="0" step="0.01" bind:value={sf.current_value} /></label>
       </div>
-      <button class="primary" onclick={submitSealed} disabled={busy === -1 || !sf.name.trim()}>Speichern</button>
+      <button class="primary" onclick={submitSealed} disabled={busy === -1 || !sf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
     {:else}
       <div class="grid2">
         <label>Name<input bind:value={gf.name} placeholder="z. B. Charizard" /></label>
@@ -75,7 +99,7 @@
         <label>Wert ($)<input type="number" min="0" step="0.01" bind:value={gf.value} /></label>
         <label>Kaufpreis ($)<input type="number" min="0" step="0.01" bind:value={gf.purchase_price} /></label>
       </div>
-      <button class="primary" onclick={submitGraded} disabled={busy === -1 || !gf.name.trim()}>Speichern</button>
+      <button class="primary" onclick={submitGraded} disabled={busy === -1 || !gf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
     {/if}
   </div>
 {/if}
@@ -89,7 +113,8 @@
       <div class="row" class:busy={busy === x.id}>
         <div><div class="rn">{x.name}</div><div class="rs">{GAME_LABEL[x.game] ?? x.game} · {x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div></div>
         <div class="rv">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : '—'}</div>
-        <button class="del" onclick={() => delSealed(x)} disabled={busy === x.id}>✕</button>
+        <button class="edit" onclick={() => startEditSealed(x)} disabled={busy === x.id} title="Bearbeiten">✎</button>
+        <button class="del" onclick={() => delSealed(x)} disabled={busy === x.id} title="Löschen">✕</button>
       </div>
     {/each}
   </div>
@@ -100,7 +125,8 @@
       <div class="row" class:busy={busy === x.id}>
         <div><div class="rn">{x.name} <span class="grade">{x.company} {x.grade}</span></div><div class="rs">{x.set_name ?? ''}{#if x.number} · {x.number}{/if}{#if x.cert} · Cert {x.cert}{/if}</div></div>
         <div class="rv">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : '—'}</div>
-        <button class="del" onclick={() => delGraded(x)} disabled={busy === x.id}>✕</button>
+        <button class="edit" onclick={() => startEditGraded(x)} disabled={busy === x.id} title="Bearbeiten">✎</button>
+        <button class="del" onclick={() => delGraded(x)} disabled={busy === x.id} title="Löschen">✕</button>
       </div>
     {/each}
   </div>
@@ -119,6 +145,7 @@
   .addform label { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--muted); }
   .addform input, .addform select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .addform .primary { align-self: flex-start; }
+  .formtitle { font-weight: 700; font-size: 0.95rem; color: var(--text, #e7e9ee); }
   .list { display: flex; flex-direction: column; gap: 8px; }
   .row { display: flex; align-items: center; gap: 14px; background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 10px; padding: 12px 14px; }
   .row.busy { opacity: 0.55; pointer-events: none; }
@@ -127,5 +154,7 @@
   .grade { color: var(--gold, #f5c451); font-size: 0.8rem; margin-left: 6px; }
   .rs { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
   .rv { color: var(--gold, #f5c451); font-weight: 700; }
+  .edit { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: var(--muted, #9aa0ad); cursor: pointer; }
+  .edit:hover { color: var(--accent, #6e7cff); border-color: var(--accent, #6e7cff); }
   .del { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #3a1620; background: transparent; color: #fca5a5; cursor: pointer; }
 </style>

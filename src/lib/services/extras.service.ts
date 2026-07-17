@@ -39,6 +39,19 @@ export async function deleteSealed(id: number): Promise<void> {
 	const { error } = await supabase().from('sealed').delete().eq('id', id);
 	if (error) throw new Error(error.message);
 }
+export type SealedPatch = Partial<{
+	name: string; game: string; product_type: string; set_name: string | null;
+	quantity: number; purchase_price: number | null; current_value: number | null;
+}>;
+export async function updateSealed(id: number, patch: SealedPatch): Promise<void> {
+	await requireUser();
+	const allowed = ['name', 'game', 'product_type', 'set_name', 'quantity', 'purchase_price', 'current_value'] as const;
+	const row: Record<string, unknown> = {};
+	for (const k of allowed) if (patch[k] !== undefined) row[k] = patch[k];
+	if (!Object.keys(row).length) return;
+	const { error } = await supabase().from('sealed').update(row).eq('id', id);
+	if (error) throw new Error(error.message);
+}
 
 // --- Gegradete Karten (graded_cards) ---
 export interface GradedCard {
@@ -67,5 +80,18 @@ export async function addGraded(g: {
 export async function deleteGraded(id: number): Promise<void> {
 	await requireUser();
 	const { error } = await supabase().from('graded_cards').delete().eq('id', id);
+	if (error) throw new Error(error.message);
+}
+export type GradedPatch = Partial<{
+	name: string; set_name: string | null; number: string | null; company: string;
+	grade: string; cert: string | null; value: number | null; purchase_price: number | null;
+}>;
+export async function updateGraded(id: number, patch: GradedPatch): Promise<void> {
+	await requireUser();
+	const allowed = ['name', 'set_name', 'number', 'company', 'grade', 'cert', 'value', 'purchase_price'] as const;
+	const row: Record<string, unknown> = {};
+	for (const k of allowed) if (patch[k] !== undefined) row[k] = patch[k];
+	if (!Object.keys(row).length) return;
+	const { error } = await supabase().from('graded_cards').update(row).eq('id', id);
 	if (error) throw new Error(error.message);
 }
