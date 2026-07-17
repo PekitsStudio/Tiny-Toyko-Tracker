@@ -1,16 +1,37 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { listSold, unsellCard, type SoldCard } from '$lib/services/collection.service';
+  import { listSold, unsellCard } from '$lib/services/collection.service';
+  import { listSoldSealed, unsellSealed } from '$lib/services/extras.service';
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
 
-  let items = $state<SoldCard[]>([]);
-  let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
+  type SoldEntry = {
+    key: string; kind: 'card' | 'sealed'; id: number; game: string; name: string;
+    set_name: string | null; sub: string | null; image_url: string | null; language: string | null;
+    quantity: number; currency: string | null; purchase_price: number | null; sold_price: number | null; sold_date: string | null;
+  };
+
+  let items = $state<SoldEntry[]>([]);
+  let status = $state(''); let loading = $state(false); let busy = $state<string | null>(null);
 
   async function load() {
     loading = true; status = '';
-    try { items = await listSold(); if (!items.length) status = 'Noch keine verkauften Karten.'; }
+    try {
+      const [cards, sealed] = await Promise.all([listSold(), listSoldSealed().catch(() => [])]);
+      const a: SoldEntry[] = cards.map((c) => ({
+        key: 'c' + c.id, kind: 'card', id: c.id, game: c.game, name: c.name, set_name: c.set_name, sub: null,
+        image_url: c.image_url, language: c.language, quantity: c.quantity ?? 1, currency: c.currency,
+        purchase_price: c.purchase_price, sold_price: c.sold_price, sold_date: c.sold_date
+      }));
+      const b: SoldEntry[] = sealed.map((s) => ({
+        key: 's' + s.id, kind: 'sealed', id: s.id, game: s.game, name: s.name, set_name: s.set_name, sub: s.product_type,
+        image_url: null, language: null, quantity: s.quantity ?? 1, currency: s.currency,
+        purchase_price: s.purchase_price, sold_price: s.sold_price, sold_date: s.sold_date
+      }));
+      items = [...a, ...b].sort((x, y) => String(y.sold_date ?? '').localeCompare(String(x.sold_date ?? '')));
+      if (!items.length) status = 'Noch keine verkauften Karten oder Produkte.';
+    }
     catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
     finally { loading = false; }
   }
@@ -21,27 +42,30 @@
   const proceeds = $derived(items.reduce((s, c) => s + (c.sold_price ?? 0) * (c.quantity ?? 1), 0));
   const realized = $derived(items.reduce((s, c) => s + ((c.sold_price ?? 0) - (c.purchase_price ?? 0)) * (c.quantity ?? 1), 0));
 
-  async function undo(c: SoldCard) {
+  async function undo(c: SoldEntry) {
     if (!confirm(`„${c.name}" zurück in die Sammlung?`)) return;
-    busy = c.id;
-    try { await unsellCard(c.id); items = items.filter((x) => x.id !== c.id); }
+    busy = c.key;
+    try {
+      if (c.kind === 'card') await unsellCard(c.id); else await unsellSealed(c.id);
+      items = items.filter((x) => x.key !== c.key);
+    }
     catch (e) { status = (e as Error).message; } finally { busy = null; }
   }
 </script>
 
 <div class="coll-head">
-  <div><h2>Verkauft</h2><div class="muted">{items.length} Karten · Erlös {fmt(proceeds)} · Gewinn/Verlust {fmt(realized)}</div></div>
+  <div><h2>Verkauft</h2><div class="muted">{items.length} verkauft · Erlös {fmt(proceeds)} · Gewinn/Verlust {fmt(realized)}</div></div>
   <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : 'Aktualisieren'}</button>
 </div>
 {#if status}<div class="hint">{status}</div>{/if}
 <div class="grid">
-  {#each items as c (c.id)}
-    <div class="card" class:busy={busy === c.id}>
+  {#each items as c (c.key)}
+    <div class="card" class:busy={busy === c.key}>
       <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
-      {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" />{:else}<div class="ph">kein Bild</div>{/if}
+      {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" />{:else}<div class="ph">{c.kind === 'sealed' ? '📦' : 'kein Bild'}</div>{/if}
       <div class="meta">
         <div class="name">{c.name}</div>
-        <div class="set"><Flag lang={c.language} />{c.set_name ?? ''}</div>
+        <div class="set"><Flag lang={c.language} />{c.sub ?? c.set_name ?? ''}</div>
         <div class="price">{c.sold_price != null ? fmt(c.sold_price, c.currency ?? 'EUR') : '—'}{#if c.quantity > 1} · ×{c.quantity}{/if}</div>
         {#if c.purchase_price != null && c.sold_price != null}
           <div class="pl" class:pos={(c.sold_price - c.purchase_price) >= 0}>
@@ -50,7 +74,7 @@
         {/if}
         {#if c.sold_date}<div class="date">verkauft {c.sold_date}</div>{/if}
       </div>
-      <div class="card-actions"><button class="undo" onclick={() => undo(c)} disabled={busy === c.id}>Zurück in Sammlung</button></div>
+      <div class="card-actions"><button class="undo" onclick={() => undo(c)} disabled={busy === c.key}>Zurück in Sammlung</button></div>
     </div>
   {/each}
 </div>

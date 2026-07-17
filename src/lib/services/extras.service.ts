@@ -39,6 +39,29 @@ export async function deleteSealed(id: number): Promise<void> {
 	const { error } = await supabase().from('sealed').delete().eq('id', id);
 	if (error) throw new Error(error.message);
 }
+// Versiegeltes Produkt als verkauft markieren -> wandert in den Reiter "Verkauft".
+export async function sellSealed(id: number, soldPrice: number | null, soldDate?: string): Promise<void> {
+	await requireUser();
+	const day = soldDate || new Date().toISOString().slice(0, 10);
+	const { error } = await supabase().from('sealed').update({ status: 'sold', sold_price: soldPrice, sold_date: day }).eq('id', id);
+	if (error) throw new Error(error.message);
+}
+export async function unsellSealed(id: number): Promise<void> {
+	await requireUser();
+	const { error } = await supabase().from('sealed').update({ status: 'owned', sold_price: null, sold_date: null }).eq('id', id);
+	if (error) throw new Error(error.message);
+}
+export interface SoldSealed {
+	id: number; game: string; name: string; set_name: string | null; product_type: string;
+	quantity: number; currency: string | null; purchase_price: number | null; sold_price: number | null; sold_date: string | null;
+}
+export async function listSoldSealed(): Promise<SoldSealed[]> {
+	await requireUser();
+	return ok(await supabase().from('sealed')
+		.select('id, game, name, set_name, product_type, quantity, currency, purchase_price, sold_price, sold_date')
+		.eq('status', 'sold').order('sold_date', { ascending: false, nullsFirst: false }));
+}
+
 export type SealedPatch = Partial<{
 	name: string; game: string; product_type: string; set_name: string | null;
 	quantity: number; purchase_price: number | null; current_value: number | null;

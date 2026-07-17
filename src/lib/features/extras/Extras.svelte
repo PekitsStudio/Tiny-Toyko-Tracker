@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { listSealed, addSealed, updateSealed, deleteSealed, listGraded, addGraded, updateGraded, deleteGraded, type SealedItem, type GradedCard } from '$lib/services/extras.service';
+  import { listSealed, addSealed, updateSealed, deleteSealed, sellSealed, listGraded, addGraded, updateGraded, deleteGraded, type SealedItem, type GradedCard } from '$lib/services/extras.service';
   import { fmt, GAME_LABEL } from '$lib/format';
 
   let mode = $state<'sealed' | 'graded'>('sealed');
@@ -10,6 +10,7 @@
   let editingId = $state<number | null>(null);
   let customType = $state('');
   let typeFilter = $state('');
+  let sellPrice = $state<number | null>(null);
 
   const GAMES = ['pokemon', 'magic', 'yugioh', 'onepiece'];
   const COMPANIES = ['PSA', 'BGS', 'CGC', 'SGC', 'Andere'];
@@ -51,7 +52,17 @@
     const known = SEALED_TYPES.includes(x.product_type);
     customType = known ? '' : (x.product_type || '');
     sf = { name: x.name, game: x.game, product_type: known ? x.product_type : '__custom__', set_name: x.set_name ?? '', quantity: x.quantity ?? 1, purchase_price: x.purchase_price ?? null, current_value: x.current_value ?? null };
+    sellPrice = x.current_value ?? null;
     showAdd = true;
+  }
+  async function sellSealedNow() {
+    if (editingId == null) return;
+    if (!confirm('Als verkauft markieren? Das Produkt wandert in den Reiter „Verkauft".')) return;
+    busy = -1;
+    try {
+      await sellSealed(editingId, sellPrice);
+      showAdd = false; editingId = null; resetSealedForm(); await load();
+    } catch (e) { status = (e as Error).message; } finally { busy = null; }
   }
   function startEditGraded(x: GradedCard) {
     editingId = x.id;
@@ -111,6 +122,12 @@
         <label>Aktueller Wert (€)<input type="number" min="0" step="0.01" bind:value={sf.current_value} /></label>
       </div>
       <button class="primary" onclick={submitSealed} disabled={busy === -1 || !sf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
+      {#if editingId != null}
+        <div class="sellbox">
+          <label class="selllabel">Verkaufspreis (€)<input type="number" min="0" step="0.01" bind:value={sellPrice} /></label>
+          <button class="sellbtn" onclick={sellSealedNow} disabled={busy === -1}>Als verkauft markieren →</button>
+        </div>
+      {/if}
     {:else}
       <div class="grid2">
         <label>Name<input bind:value={gf.name} placeholder="z. B. Charizard" /></label>
@@ -186,6 +203,11 @@
   .addform input, .addform select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .addform .primary { align-self: flex-start; }
   .formtitle { font-weight: 700; font-size: 0.95rem; color: var(--text, #e7e9ee); }
+  .sellbox { border-top: 1px dashed #2a2f3a; padding-top: 12px; margin-top: 4px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .selllabel { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--muted); }
+  .selllabel input { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
+  .sellbtn { padding: 9px 14px; border-radius: 8px; border: 1px solid #3a2a16; background: transparent; color: #f5c451; cursor: pointer; font-weight: 600; }
+  .sellbtn:hover { background: rgba(245,196,81,0.1); }
   .filterbar { margin-bottom: 12px; }
   .filterbar label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted, #9aa0ad); }
   .filterbar select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
