@@ -48,6 +48,14 @@
     if (showAdd) { showAdd = false; editingId = null; return; }
     editingId = null; resetSealedForm(); resetGradedForm(); showAdd = true;
   }
+  function closeForm() { showAdd = false; editingId = null; }
+  function onkey(e: KeyboardEvent) { if (e.key === 'Escape' && showAdd) closeForm(); }
+  async function delFromModal() {
+    if (editingId == null) return;
+    const id = editingId;
+    if (mode === 'sealed') { const x = sealed.find((s) => s.id === id); closeForm(); if (x) await delSealed(x); }
+    else { const x = graded.find((g) => g.id === id); closeForm(); if (x) await delGraded(x); }
+  }
   function startEditSealed(x: SealedItem) {
     editingId = x.id;
     const known = SEALED_TYPES.includes(x.product_type);
@@ -92,6 +100,8 @@
   async function delGraded(x: GradedCard) { if (!confirm(`„${x.name}" löschen?`)) return; busy = x.id; try { await deleteGraded(x.id); graded = graded.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
 </script>
 
+<svelte:window onkeydown={onkey} />
+
 <div class="coll-head">
   <div class="modes">
     <button class:active={mode === 'sealed'} onclick={() => switchMode('sealed')}>Versiegelt</button>
@@ -104,8 +114,10 @@
 </div>
 
 {#if showAdd}
-  <div class="addform">
-    <div class="formtitle">{editingId != null ? '✎ Bearbeiten' : '+ Neu hinzufügen'}</div>
+  <div class="ov" onclick={closeForm} role="presentation">
+    <div class="addform dlg" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()}>
+      <button class="x" onclick={closeForm} aria-label="Schließen">✕</button>
+      <div class="formtitle">{editingId != null ? '✎ Bearbeiten' : '+ Neu hinzufügen'}</div>
     {#if mode === 'sealed'}
       <div class="grid2">
         <label>Name<input bind:value={sf.name} placeholder="z. B. Display Obsidian Flames" /></label>
@@ -144,6 +156,8 @@
       <div class="imgfield"><span class="imgfield-l">Bild (optional)</span><ImageUpload bind:value={gf.image_url} folder="graded" /></div>
       <button class="primary" onclick={submitGraded} disabled={busy === -1 || !gf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
     {/if}
+      {#if editingId != null}<button class="modaldel" onclick={delFromModal} disabled={busy === -1}>Aus Bestand löschen</button>{/if}
+    </div>
   </div>
 {/if}
 
@@ -215,6 +229,13 @@
   .muted { color: var(--muted, #9aa0ad); font-size: 14px; }
   .primary { padding: 8px 14px; border-radius: 8px; border: 0; background: var(--accent, #6366f1); color: #fff; font-weight: 600; cursor: pointer; }
   .addform { background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 12px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .ov { position: fixed; inset: 0; background: rgba(6,8,14,0.66); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+  .dlg { position: relative; margin: 0; width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: var(--shadow-lg, 0 24px 60px -18px rgba(0,0,0,.65)); }
+  .x { position: absolute; top: 10px; right: 12px; width: 32px; height: 32px; border-radius: 999px; border: 1px solid #2a2f3a; background: rgba(0,0,0,0.3); color: var(--muted, #9aa0ad); cursor: pointer; }
+  .x:hover { color: var(--text, #e7e9ee); }
+  .modaldel { align-self: flex-start; padding: 8px 14px; border-radius: 8px; border: 1px solid #3a1620; background: transparent; color: #fca5a5; cursor: pointer; font-weight: 600; }
+  .modaldel:hover { background: rgba(252,165,165,0.08); }
+  @media (max-width: 560px) { .ov { padding: 0; align-items: flex-end; } .dlg { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; margin-bottom: 0; } }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
   .addform label { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--muted); }
   .addform input, .addform select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
