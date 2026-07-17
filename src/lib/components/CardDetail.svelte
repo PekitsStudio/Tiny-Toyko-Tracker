@@ -208,11 +208,11 @@
 
 <style>
   .ov { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-  .dlg { position: relative; background: var(--surface, #171a23); border: 1px solid #2a2f3a; border-radius: 16px; max-width: 640px; width: 100%; max-height: 90vh; overflow: auto; }
-  .x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 999px; border: 1px solid #2a2f3a; background: rgba(0,0,0,0.3); color: inherit; cursor: pointer; }
-  .body { display: flex; gap: 20px; padding: 22px; flex-wrap: wrap; }
-  .big { width: 220px; max-width: 45vw; aspect-ratio: 5/7; object-fit: contain; background: #0a0c10; border-radius: 10px; }
-  .info { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; }
+  .dlg { position: relative; background: var(--surface, #171a23); border: 1px solid #2a2f3a; border-radius: 16px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; }
+  .x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 999px; border: 1px solid #2a2f3a; background: rgba(0,0,0,0.3); color: inherit; cursor: pointer; z-index: 2; }
+  .body { display: flex; align-items: flex-start; gap: 22px; padding: 22px; flex-wrap: wrap; }
+  .big { width: 230px; max-width: 45vw; aspect-ratio: 5/7; object-fit: contain; background: #0a0c10; border-radius: 12px; align-self: flex-start; position: sticky; top: 0; flex-shrink: 0; }
+  .info { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
   .info h2 { margin: 4px 0; font-size: 1.35rem; }
   .line { display: flex; align-items: center; color: var(--muted); }
   .muted { color: var(--muted, #9aa0ad); font-size: 0.9rem; }
@@ -249,7 +249,7 @@
     .ov { padding: 0; align-items: flex-end; }
     .dlg { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; border-bottom: 0; }
     .body { padding: 16px; gap: 14px; }
-    .big { width: 100%; max-width: 260px; margin: 0 auto; }
+    .big { width: 100%; max-width: 240px; margin: 0 auto; position: static; }
     .info { min-width: 0; width: 100%; }
     .row2 { gap: 8px; }
     .row2 label { flex: 1 1 45%; }
