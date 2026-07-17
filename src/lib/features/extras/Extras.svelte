@@ -162,33 +162,45 @@
     </div>
   {/if}
   {#if typeFilter && !filteredSealed.length}<div class="hint">Keine Produkte mit diesem Typ.</div>{/if}
-  <div class="list">
+  <div class="grid">
     {#each filteredSealed as x (x.id)}
-      <div class="row" class:busy={busy === x.id}>
-        {#if x.image_url}<img class="thumb" src={x.image_url} alt="" loading="lazy" />{/if}
-        <div><div class="rn">{x.name}</div><div class="rs">{GAME_LABEL[x.game] ?? x.game} · {x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div></div>
-        <div class="rv">
-          <div class="rv-now">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : '—'}</div>
-          {#if x.purchase_price != null}<div class="rv-ek">EK {fmt(x.purchase_price, x.currency ?? 'EUR')}</div>{/if}
+      <div class="card" class:busy={busy === x.id}>
+        <span class="tag {x.game}">{GAME_LABEL[x.game] ?? x.game}</span>
+        {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditSealed(x)} />{:else}<div class="boxph">📦</div>{/if}
+        <div class="meta">
+          <div class="name">{x.name}</div>
+          <div class="set">{x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div>
+          <div class="price">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : 'kein Preis'}</div>
+          {#if x.purchase_price != null}
+            <div class="subline"><span class="ek">EK {fmt(x.purchase_price, x.currency ?? 'EUR')}</span>{#if x.current_value != null}<span class="pl" class:pos={(x.current_value - x.purchase_price) >= 0}>{(x.current_value - x.purchase_price) >= 0 ? '+' : ''}{fmt((x.current_value - x.purchase_price) * (x.quantity ?? 1), x.currency ?? 'EUR')}</span>{/if}</div>
+          {/if}
         </div>
-        <button class="edit" onclick={() => startEditSealed(x)} disabled={busy === x.id} title="Bearbeiten">✎</button>
-        <button class="del" onclick={() => delSealed(x)} disabled={busy === x.id} title="Löschen">✕</button>
+        <div class="card-actions">
+          <button class="act" onclick={() => startEditSealed(x)} disabled={busy === x.id}>✎ Bearbeiten</button>
+          <button class="act delx" onclick={() => delSealed(x)} disabled={busy === x.id} title="Löschen">✕</button>
+        </div>
       </div>
     {/each}
   </div>
 {:else}
   {#if !graded.length && !loading}<div class="hint">Noch keine gegradeten Karten.</div>{/if}
-  <div class="list">
+  <div class="grid">
     {#each graded as x (x.id)}
-      <div class="row" class:busy={busy === x.id}>
-        {#if x.image_url}<img class="thumb" src={x.image_url} alt="" loading="lazy" />{/if}
-        <div><div class="rn">{x.name} <span class="grade">{x.company} {x.grade}</span></div><div class="rs">{x.set_name ?? ''}{#if x.number} · {x.number}{/if}{#if x.cert} · Cert {x.cert}{/if}</div></div>
-        <div class="rv">
-          <div class="rv-now">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : '—'}</div>
-          {#if x.purchase_price != null}<div class="rv-ek">EK {fmt(x.purchase_price, x.currency ?? 'USD')}</div>{/if}
+      <div class="card" class:busy={busy === x.id}>
+        <span class="gbadge {x.company}">{x.company} {x.grade}</span>
+        {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditGraded(x)} />{:else}<div class="boxph">🎴</div>{/if}
+        <div class="meta">
+          <div class="name">{x.name}</div>
+          <div class="set">{x.set_name ?? ''}{#if x.number} · {x.number}{/if}{#if x.cert} · Cert {x.cert}{/if}</div>
+          <div class="price">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : 'kein Preis'}</div>
+          {#if x.purchase_price != null}
+            <div class="subline"><span class="ek">EK {fmt(x.purchase_price, x.currency ?? 'USD')}</span>{#if x.value != null}<span class="pl" class:pos={(x.value - x.purchase_price) >= 0}>{(x.value - x.purchase_price) >= 0 ? '+' : ''}{fmt(x.value - x.purchase_price, x.currency ?? 'USD')}</span>{/if}</div>
+          {/if}
         </div>
-        <button class="edit" onclick={() => startEditGraded(x)} disabled={busy === x.id} title="Bearbeiten">✎</button>
-        <button class="del" onclick={() => delGraded(x)} disabled={busy === x.id} title="Löschen">✕</button>
+        <div class="card-actions">
+          <button class="act" onclick={() => startEditGraded(x)} disabled={busy === x.id}>✎ Bearbeiten</button>
+          <button class="act delx" onclick={() => delGraded(x)} disabled={busy === x.id} title="Löschen">✕</button>
+        </div>
       </div>
     {/each}
   </div>
@@ -210,7 +222,6 @@
   .formtitle { font-weight: 700; font-size: 0.95rem; color: var(--text, #e7e9ee); }
   .imgfield { display: flex; flex-direction: column; gap: 6px; }
   .imgfield-l { font-size: 0.8rem; color: var(--muted); }
-  .thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; background: #12151d; border: 1px solid #2a2f3a; flex-shrink: 0; }
   .sellbox { border-top: 1px dashed #2a2f3a; padding-top: 12px; margin-top: 4px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
   .selllabel { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--muted); }
   .selllabel input { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
@@ -219,19 +230,20 @@
   .filterbar { margin-bottom: 12px; }
   .filterbar label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted, #9aa0ad); }
   .filterbar select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
-  .list { display: flex; flex-direction: column; gap: 8px; }
-  .row { display: flex; align-items: center; gap: 14px; background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 10px; padding: 12px 14px; }
-  .row.busy { opacity: 0.55; pointer-events: none; }
-  .row > div:first-child { flex: 1; }
-  .rn { font-weight: 600; }
-  .grade { color: var(--gold, #f5c451); font-size: 0.8rem; margin-left: 6px; }
-  .rs { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
-  .rv { text-align: right; }
-  .rv-now { color: var(--gold, #f5c451); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .rv-ek { color: var(--muted, #9aa0ad); font-size: 0.72rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .edit, .del { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border-radius: 8px; background: transparent; cursor: pointer; font-size: 0.95rem; line-height: 1; }
-  .edit { border: 1px solid #2a2f3a; color: var(--muted, #9aa0ad); }
-  .edit:hover { color: var(--accent, #6e7cff); border-color: var(--accent, #6e7cff); }
-  .del { border: 1px solid #3a1620; color: #fca5a5; }
-  .del:hover { border-color: #fca5a5; }
+  .card.busy { opacity: 0.55; pointer-events: none; }
+  .boxph { aspect-ratio: 5 / 7; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; background: #0a0c10; }
+  .gbadge { position: absolute; top: 9px; left: 9px; z-index: 1; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.04em; padding: 4px 8px; border-radius: 6px; color: #fff; background: var(--surface-3, #232a38); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.35)); }
+  .gbadge.PSA { background: #b3122b; }
+  .gbadge.BGS { background: #1d3b6e; }
+  .gbadge.CGC { background: #0b7a5e; }
+  .gbadge.SGC { background: #3a3a3a; }
+  .subline { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; margin-top: 3px; }
+  .ek { color: var(--muted, #9aa0ad); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+  .pl { font-size: 0.72rem; font-weight: 700; color: #fca5a5; font-variant-numeric: tabular-nums; }
+  .pl.pos { color: #86efac; }
+  .card-actions .act { flex: 1; padding: 9px 8px; border: 0; border-right: 1px solid var(--border, #2a2f3a); background: transparent; color: var(--muted, #9aa0ad); cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+  .card-actions .act:last-child { border-right: 0; }
+  .card-actions .act:hover { background: var(--surface-2, #1b202b); color: var(--text, #e7e9ee); }
+  .card-actions .act.delx { flex: 0 0 auto; color: #fca5a5; }
+  .card-actions .act:disabled { opacity: 0.5; cursor: default; }
 </style>

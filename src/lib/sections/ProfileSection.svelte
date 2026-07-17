@@ -3,9 +3,10 @@
   import Messages from '$lib/features/social/Messages.svelte';
   import Friends from '$lib/features/social/Friends.svelte';
   import Settings from '$lib/features/settings/Settings.svelte';
+  import Export from '$lib/features/exporting/Export.svelte';
   import { social } from '$lib/stores/social.svelte';
 
-  let sub = $state<'profil' | 'nachrichten' | 'freunde' | 'einstellungen'>('profil');
+  let sub = $state<'profil' | 'nachrichten' | 'freunde' | 'export' | 'einstellungen'>('profil');
   $effect(() => { if (social.chatWith) sub = 'nachrichten'; });
 </script>
 
@@ -13,12 +14,14 @@
   <button class:active={sub === 'profil'} onclick={() => (sub = 'profil')}>Mein Profil</button>
   <button class:active={sub === 'nachrichten'} onclick={() => (sub = 'nachrichten')}>Nachrichten</button>
   <button class:active={sub === 'freunde'} onclick={() => (sub = 'freunde')}>Freunde</button>
+  <button class:active={sub === 'export'} onclick={() => (sub = 'export')}>Import/Export</button>
   <button class:active={sub === 'einstellungen'} onclick={() => (sub = 'einstellungen')}>Einstellungen</button>
 </div>
 
 {#if sub === 'profil'}<Profile />
 {:else if sub === 'nachrichten'}<Messages />
 {:else if sub === 'freunde'}<Friends />
+{:else if sub === 'export'}<Export />
 {:else}<Settings />{/if}
 
 <style>
