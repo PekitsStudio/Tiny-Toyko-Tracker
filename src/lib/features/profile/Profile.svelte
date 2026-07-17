@@ -2,8 +2,10 @@
   import { onMount } from 'svelte';
   import { getMyProfile, updateMyProfile } from '$lib/services/profile.service';
   import { auth } from '$lib/stores/auth.svelte';
+  import ImageUpload from '$lib/components/ImageUpload.svelte';
 
   let displayName = $state('');
+  let avatar = $state('');
   let f = $state({ country: '', contact: '', bio: '', fav_games: '', collector_type: '' });
   let loading = $state(false); let saving = $state(false); let msg = $state('');
 
@@ -12,6 +14,7 @@
     try {
       const p = await getMyProfile();
       displayName = p.display_name ?? '';
+      avatar = p.avatar_url ?? '';
       f = {
         country: p.country ?? '', contact: p.contact ?? '', bio: p.bio ?? '',
         fav_games: p.fav_games ?? '', collector_type: p.collector_type ?? ''
@@ -28,7 +31,7 @@
     try {
       await updateMyProfile({
         country: f.country || null, contact: f.contact || null, bio: f.bio || null,
-        fav_games: f.fav_games || null, collector_type: f.collector_type || null
+        fav_games: f.fav_games || null, collector_type: f.collector_type || null, avatar_url: avatar || null
       });
       msg = 'Gespeichert ✓';
       setTimeout(() => (msg = ''), 3000);
@@ -41,6 +44,7 @@
 {#if loading}<div class="hint">Lädt…</div>{/if}
 
 <div class="form">
+  <label>Profilbild<ImageUpload bind:value={avatar} folder="avatars" round={true} /></label>
   <label>Anzeigename
     <input value={displayName || auth.user?.email || ''} disabled />
     <small>Der Anzeigename ist fest und kann nicht geändert werden.</small>

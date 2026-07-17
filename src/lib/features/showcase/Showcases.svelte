@@ -12,6 +12,7 @@
   import { profileView } from '$lib/stores/profileview.svelte';
   import Flag from '$lib/components/Flag.svelte';
   import CountryFlag from '$lib/components/CountryFlag.svelte';
+  import ImageUpload from '$lib/components/ImageUpload.svelte';
 
   const REACTIONS: { kind: ReactionKind; emoji: string; countKey: 'like_count' | 'fire_count' | 'gem_count' | 'save_count' }[] = [
     { kind: 'like', emoji: '❤️', countKey: 'like_count' },
@@ -31,9 +32,10 @@
   let cards = $state<ShowcaseCard[]>([]);
   let comments = $state<ShowcaseComment[]>([]);
   let newComment = $state(''); let commentBusy = $state(false);
+  let coverDraft = $state('');
 
   let showCreate = $state(false);
-  let cf = $state({ name: '', description: '', visibility: 'public' as Visibility, game: '' });
+  let cf = $state({ name: '', description: '', visibility: 'public' as Visibility, game: '', cover: '' });
 
   let showPicker = $state(false);
   let myColl = $state<CollectionCard[]>([]);
@@ -48,7 +50,7 @@
   function switchMode(m: 'meine' | 'entdecken') { mode = m; showCreate = false; loadList(); }
 
   async function open(s: Showcase) {
-    sc = s; showPicker = false; comments = []; newComment = '';
+    sc = s; showPicker = false; comments = []; newComment = ''; coverDraft = s.cover ?? '';
     try { cards = await getShowcaseCards(s.id); } catch (e) { status = (e as Error).message; }
     try { comments = await listShowcaseComments(s.id); } catch { comments = []; }
   }
@@ -83,7 +85,7 @@
 
   async function doCreate() {
     if (!cf.name.trim()) return; busy = true;
-    try { const s = await createShowcase({ name: cf.name.trim(), description: cf.description || null, visibility: cf.visibility, game: cf.game || null }); showCreate = false; cf = { name: '', description: '', visibility: 'public', game: '' }; await loadList(); await open({ ...s, card_count: 0 } as Showcase); }
+    try { const s = await createShowcase({ name: cf.name.trim(), description: cf.description || null, visibility: cf.visibility, game: cf.game || null, cover_url: cf.cover || null }); showCreate = false; cf = { name: '', description: '', visibility: 'public', game: '', cover: '' }; await loadList(); await open({ ...s, card_count: 0 } as Showcase); }
     catch (e) { status = (e as Error).message; } finally { busy = false; }
   }
   async function del(s: Showcase) {
@@ -94,6 +96,11 @@
   async function setVis(v: Visibility) {
     if (!sc) return; busy = true;
     try { await updateShowcase(sc.id, { visibility: v }); sc.visibility = v; }
+    catch (e) { status = (e as Error).message; } finally { busy = false; }
+  }
+  async function saveCover() {
+    if (!sc) return; busy = true;
+    try { await updateShowcase(sc.id, { cover_url: coverDraft || null }); sc.cover = coverDraft || null; sc = { ...sc }; }
     catch (e) { status = (e as Error).message; } finally { busy = false; }
   }
   async function openPicker() { showPicker = true; if (!myColl.length) { try { myColl = await listCards(); } catch (e) { status = (e as Error).message; } } }
@@ -148,6 +155,7 @@
       <div class="grid2">
         <label>Sichtbarkeit<select bind:value={cf.visibility}><option value="private">Privat</option><option value="unlisted">Per Link</option><option value="public">Öffentlich</option></select></label>
       </div>
+      <div class="coverfield"><span class="cf-l">Cover (optional)</span><ImageUpload bind:value={cf.cover} folder="covers" /></div>
       <button class="primary" onclick={doCreate} disabled={busy || !cf.name.trim()}>Erstellen</button>
     </div>
   {/if}
@@ -201,6 +209,14 @@
       <button class="ghost danger" onclick={() => del(sc!)}>Löschen</button>
     {/if}
   </div>
+
+  {#if sc.is_mine}
+    <div class="coverbox">
+      <span class="cf-l">Cover-Bild</span>
+      <ImageUpload bind:value={coverDraft} folder="covers" />
+      <button class="ghost coversave" onclick={saveCover} disabled={busy}>Cover speichern</button>
+    </div>
+  {/if}
 
   {#if showPicker}
     <div class="picker">
@@ -256,6 +272,10 @@
   select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: inherit; }
   .addform { background: var(--surface, #171a23); border: 1px solid #232833; border-radius: 12px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
   .addform label { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; color: var(--muted); }
+  .coverfield, .coverbox { display: flex; flex-direction: column; gap: 6px; }
+  .coverbox { margin: 4px 0 16px; }
+  .cf-l { font-size: 0.82rem; color: var(--muted); }
+  .coversave { align-self: flex-start; }
   .addform input, .addform textarea, .addform select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
   .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }

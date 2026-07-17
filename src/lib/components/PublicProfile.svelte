@@ -1,6 +1,6 @@
 <script lang="ts">
   import { profileView } from '$lib/stores/profileview.svelte';
-  import { getPublicProfile, getUserFeedback, type PublicProfile, type FeedbackEntry } from '$lib/services/profile.service';
+  import { getPublicProfile, getUserFeedback, getAvatar, type PublicProfile, type FeedbackEntry } from '$lib/services/profile.service';
   import { listRatings, rateUser, deleteRating, type UserRating } from '$lib/services/ratings.service';
   import { listMarketBySeller, type MarketCard } from '$lib/services/market.service';
   import { fmt } from '$lib/format';
@@ -14,6 +14,7 @@
   let offers = $state<MarketCard[]>([]);
   let fbs = $state<FeedbackEntry[]>([]);
   let ratings = $state<UserRating[]>([]);
+  let avatarUrl = $state<string | null>(null);
   let loading = $state(false); let err = $state(''); let friendMsg = $state('');
 
   // Eigene Bewertung des angezeigten Nutzers (Formular).
@@ -23,12 +24,13 @@
 
   $effect(() => {
     const id = profileView.userId;
-    if (!id) { prof = null; offers = []; fbs = []; ratings = []; err = ''; return; }
-    loading = true; err = ''; prof = null; offers = []; fbs = []; ratings = [];
+    if (!id) { prof = null; offers = []; fbs = []; ratings = []; avatarUrl = null; err = ''; return; }
+    loading = true; err = ''; prof = null; offers = []; fbs = []; ratings = []; avatarUrl = null;
     myStars = 0; myComment = ''; rateMsg = '';
     (async () => {
       try {
         prof = await getPublicProfile(id);
+        try { avatarUrl = await getAvatar(id); } catch { avatarUrl = null; }
         try { offers = await listMarketBySeller(id); } catch { offers = []; }
         try { fbs = await getUserFeedback(id); } catch { fbs = []; }
         try {
@@ -77,7 +79,10 @@
       {:else if err}<div class="pad err">{err}</div>
       {:else if prof}
         <div class="phead">
-          <h2>{prof.name ?? 'Sammler'}</h2>
+          <div class="pf-top">
+            {#if avatarUrl}<img class="pf-av" src={avatarUrl} alt="" />{:else}<div class="pf-av avph">{(prof.name ?? 'S').slice(0, 1).toUpperCase()}</div>{/if}
+            <h2>{prof.name ?? 'Sammler'}</h2>
+          </div>
           <div class="sub">{#if prof.country}{prof.country} · {/if}Mitglied seit {since(prof.member_since)}</div>
           <div class="stats">
             {#if prof.rank != null}<span class="stat">Rang #{prof.rank}</span>{/if}
@@ -170,7 +175,10 @@
   .dlg { position: relative; background: var(--surface, #171a23); border: 1px solid #2a2f3a; border-radius: 16px; max-width: 680px; width: 100%; max-height: 90vh; overflow: auto; padding: 22px; }
   .x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 999px; border: 1px solid #2a2f3a; background: rgba(0,0,0,0.3); color: inherit; cursor: pointer; }
   .pad { padding: 16px 0; } .err { color: #fca5a5; } .muted { color: var(--muted, #9aa0ad); }
-  .phead h2 { margin: 0 0 4px; }
+  .phead h2 { margin: 0; }
+  .pf-top { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .pf-av { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #12151d; border: 2px solid var(--border, #2a2f3a); flex-shrink: 0; }
+  .avph { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.5rem; color: var(--accent, #6e7cff); }
   .sub { color: var(--muted); font-size: 0.9rem; }
   .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
   .stat { background: #12151d; border: 1px solid #2a2f3a; border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; }

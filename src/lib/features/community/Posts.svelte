@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { listPosts, createPost, deletePost, toggleLikePost, listPostComments, addPostComment, type Post, type PostComment, type PostKind } from '$lib/services/community.service';
   import { auth } from '$lib/stores/auth.svelte';
+  import ImageUpload from '$lib/components/ImageUpload.svelte';
 
   let { kind, label }: { kind: PostKind; label: string } = $props();
 
@@ -59,7 +60,7 @@
   <div class="form">
     <input placeholder="Titel" bind:value={cf.title} />
     <textarea rows="4" placeholder="Dein Beitrag…" bind:value={cf.body}></textarea>
-    <input placeholder="Bild-URL (optional)" bind:value={cf.image_url} />
+    <ImageUpload bind:value={cf.image_url} folder="posts" />
     <button class="primary" onclick={submit} disabled={busy || !cf.title.trim() || !cf.body.trim()}>Veröffentlichen</button>
   </div>
 {/if}

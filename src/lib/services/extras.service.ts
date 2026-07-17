@@ -24,13 +24,13 @@ export async function listSealed(): Promise<SealedItem[]> {
 }
 export async function addSealed(s: {
 	name: string; game: string; product_type: string; set_name?: string | null;
-	quantity?: number; purchase_price?: number | null; current_value?: number | null; currency?: string;
+	quantity?: number; purchase_price?: number | null; current_value?: number | null; currency?: string; image_url?: string | null;
 }): Promise<void> {
 	const uid = await requireUser();
 	const { error } = await supabase().from('sealed').insert({
 		user_id: uid, name: s.name, game: s.game, product_type: s.product_type, set_name: s.set_name ?? null,
 		quantity: s.quantity ?? 1, purchase_price: s.purchase_price ?? null, current_value: s.current_value ?? null,
-		currency: s.currency || 'EUR', status: 'owned'
+		currency: s.currency || 'EUR', image_url: s.image_url ?? null, status: 'owned'
 	});
 	if (error) throw new Error(error.message);
 }
@@ -64,11 +64,11 @@ export async function listSoldSealed(): Promise<SoldSealed[]> {
 
 export type SealedPatch = Partial<{
 	name: string; game: string; product_type: string; set_name: string | null;
-	quantity: number; purchase_price: number | null; current_value: number | null;
+	quantity: number; purchase_price: number | null; current_value: number | null; image_url: string | null;
 }>;
 export async function updateSealed(id: number, patch: SealedPatch): Promise<void> {
 	await requireUser();
-	const allowed = ['name', 'game', 'product_type', 'set_name', 'quantity', 'purchase_price', 'current_value'] as const;
+	const allowed = ['name', 'game', 'product_type', 'set_name', 'quantity', 'purchase_price', 'current_value', 'image_url'] as const;
 	const row: Record<string, unknown> = {};
 	for (const k of allowed) if (patch[k] !== undefined) row[k] = patch[k];
 	if (!Object.keys(row).length) return;
@@ -90,13 +90,13 @@ export async function listGraded(): Promise<GradedCard[]> {
 }
 export async function addGraded(g: {
 	name: string; company: string; grade: string; set_name?: string | null; number?: string | null;
-	cert?: string | null; value?: number | null; purchase_price?: number | null; currency?: string;
+	cert?: string | null; value?: number | null; purchase_price?: number | null; currency?: string; image_url?: string | null;
 }): Promise<void> {
 	const uid = await requireUser();
 	const { error } = await supabase().from('graded_cards').insert({
 		user_id: uid, name: g.name, company: g.company, grade: g.grade, set_name: g.set_name ?? null,
 		number: g.number ?? null, cert: g.cert ?? null, value: g.value ?? null, purchase_price: g.purchase_price ?? null,
-		currency: g.currency || 'USD', status: 'owned'
+		currency: g.currency || 'USD', image_url: g.image_url ?? null, status: 'owned'
 	});
 	if (error) throw new Error(error.message);
 }
@@ -107,11 +107,11 @@ export async function deleteGraded(id: number): Promise<void> {
 }
 export type GradedPatch = Partial<{
 	name: string; set_name: string | null; number: string | null; company: string;
-	grade: string; cert: string | null; value: number | null; purchase_price: number | null;
+	grade: string; cert: string | null; value: number | null; purchase_price: number | null; image_url: string | null;
 }>;
 export async function updateGraded(id: number, patch: GradedPatch): Promise<void> {
 	await requireUser();
-	const allowed = ['name', 'set_name', 'number', 'company', 'grade', 'cert', 'value', 'purchase_price'] as const;
+	const allowed = ['name', 'set_name', 'number', 'company', 'grade', 'cert', 'value', 'purchase_price', 'image_url'] as const;
 	const row: Record<string, unknown> = {};
 	for (const k of allowed) if (patch[k] !== undefined) row[k] = patch[k];
 	if (!Object.keys(row).length) return;

@@ -6,20 +6,26 @@ async function requireUser(): Promise<string> {
 	return data.user.id;
 }
 
-export interface Profile { display_name: string | null; country: string | null; contact: string | null; bio: string | null; fav_games: string | null; collector_type: string | null; }
+export interface Profile { display_name: string | null; country: string | null; contact: string | null; bio: string | null; fav_games: string | null; collector_type: string | null; avatar_url: string | null; }
 export async function getMyProfile(): Promise<Profile> {
 	const uid = await requireUser();
-	const { data, error } = await supabase().from('user_settings').select('display_name, country, contact, bio, fav_games, collector_type').eq('user_id', uid).maybeSingle();
+	const { data, error } = await supabase().from('user_settings').select('display_name, country, contact, bio, fav_games, collector_type, avatar_url').eq('user_id', uid).maybeSingle();
 	if (error) throw new Error(error.message);
-	return (data ?? { display_name: null, country: null, contact: null, bio: null, fav_games: null, collector_type: null }) as Profile;
+	return (data ?? { display_name: null, country: null, contact: null, bio: null, fav_games: null, collector_type: null, avatar_url: null }) as Profile;
 }
-export type ProfilePatch = { country?: string | null; contact?: string | null; bio?: string | null; fav_games?: string | null; collector_type?: string | null };
+export type ProfilePatch = { country?: string | null; contact?: string | null; bio?: string | null; fav_games?: string | null; collector_type?: string | null; avatar_url?: string | null };
 export async function updateMyProfile(fields: ProfilePatch): Promise<void> {
 	const uid = await requireUser();
 	const row: Record<string, unknown> = { user_id: uid };
-	for (const k of ['country', 'contact', 'bio', 'fav_games', 'collector_type'] as const) { if (fields[k] !== undefined) row[k] = fields[k]; }
+	for (const k of ['country', 'contact', 'bio', 'fav_games', 'collector_type', 'avatar_url'] as const) { if (fields[k] !== undefined) row[k] = fields[k]; }
 	const { error } = await supabase().from('user_settings').upsert(row, { onConflict: 'user_id' });
 	if (error) throw new Error(error.message);
+}
+// Oeffentlicher Avatar eines Nutzers (aus der View public_avatars).
+export async function getAvatar(userId: string): Promise<string | null> {
+	const { data, error } = await supabase().from('public_avatars').select('avatar_url').eq('user_id', userId).maybeSingle();
+	if (error) return null;
+	return (data?.avatar_url as string | null) ?? null;
 }
 
 export interface PublicProfile {

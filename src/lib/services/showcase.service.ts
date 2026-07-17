@@ -39,17 +39,17 @@ export async function discoverShowcases(): Promise<Showcase[]> {
 export async function getShowcaseCards(id: number): Promise<ShowcaseCard[]> {
 	return ok(await supabase().from('collection_cards').select('id, game, name, set_name, number, rarity, image_url, language, position').eq('collection_id', id).order('position', { ascending: true }).order('id', { ascending: true }));
 }
-export async function createShowcase(c: { name: string; description?: string | null; visibility?: Visibility; game?: string | null }): Promise<Showcase> {
+export async function createShowcase(c: { name: string; description?: string | null; visibility?: Visibility; game?: string | null; cover_url?: string | null }): Promise<Showcase> {
 	const uid = await requireUser();
 	const { data, error } = await supabase().from('collections').insert({
-		user_id: uid, name: c.name, description: c.description || null, visibility: c.visibility || 'private', game: c.game || null
+		user_id: uid, name: c.name, description: c.description || null, visibility: c.visibility || 'private', game: c.game || null, cover_url: c.cover_url || null
 	}).select().single();
 	if (error) throw new Error(error.message);
 	return data as Showcase;
 }
-export async function updateShowcase(id: number, patch: { name?: string; description?: string | null; visibility?: Visibility; game?: string | null }): Promise<void> {
+export async function updateShowcase(id: number, patch: { name?: string; description?: string | null; visibility?: Visibility; game?: string | null; cover_url?: string | null }): Promise<void> {
 	const allowed: Record<string, unknown> = {};
-	for (const k of ['name', 'description', 'visibility', 'game'] as const) if (patch[k] !== undefined) allowed[k] = patch[k];
+	for (const k of ['name', 'description', 'visibility', 'game', 'cover_url'] as const) if (patch[k] !== undefined) allowed[k] = patch[k];
 	allowed.updated_at = new Date().toISOString();
 	const { error } = await supabase().from('collections').update(allowed).eq('id', id);
 	if (error) throw new Error(error.message);

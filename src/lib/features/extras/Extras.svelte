@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { listSealed, addSealed, updateSealed, deleteSealed, sellSealed, listGraded, addGraded, updateGraded, deleteGraded, type SealedItem, type GradedCard } from '$lib/services/extras.service';
   import { fmt, GAME_LABEL } from '$lib/format';
+  import ImageUpload from '$lib/components/ImageUpload.svelte';
 
   let mode = $state<'sealed' | 'graded'>('sealed');
   let sealed = $state<SealedItem[]>([]); let graded = $state<GradedCard[]>([]);
@@ -20,8 +21,8 @@
     'Premium Collection', 'Starter-/Theme-Deck', 'Case', 'Adventskalender'
   ];
 
-  let sf = $state({ name: '', game: 'pokemon', product_type: 'Display / Booster Box', set_name: '', quantity: 1, purchase_price: null as number | null, current_value: null as number | null });
-  let gf = $state({ name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null as number | null, purchase_price: null as number | null });
+  let sf = $state({ name: '', game: 'pokemon', product_type: 'Display / Booster Box', set_name: '', quantity: 1, purchase_price: null as number | null, current_value: null as number | null, image_url: '' });
+  let gf = $state({ name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null as number | null, purchase_price: null as number | null, image_url: '' });
 
   async function load() {
     loading = true; status = '';
@@ -41,8 +42,8 @@
     return [...m.entries()].map(([type, n]) => ({ type, n })).sort((a, b) => a.type.localeCompare(b.type));
   });
 
-  function resetSealedForm() { sf = { name: '', game: 'pokemon', product_type: 'Display / Booster Box', set_name: '', quantity: 1, purchase_price: null, current_value: null }; customType = ''; }
-  function resetGradedForm() { gf = { name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null, purchase_price: null }; }
+  function resetSealedForm() { sf = { name: '', game: 'pokemon', product_type: 'Display / Booster Box', set_name: '', quantity: 1, purchase_price: null, current_value: null, image_url: '' }; customType = ''; }
+  function resetGradedForm() { gf = { name: '', set_name: '', number: '', company: 'PSA', grade: '10', cert: '', value: null, purchase_price: null, image_url: '' }; }
   function toggleAdd() {
     if (showAdd) { showAdd = false; editingId = null; return; }
     editingId = null; resetSealedForm(); resetGradedForm(); showAdd = true;
@@ -51,7 +52,7 @@
     editingId = x.id;
     const known = SEALED_TYPES.includes(x.product_type);
     customType = known ? '' : (x.product_type || '');
-    sf = { name: x.name, game: x.game, product_type: known ? x.product_type : '__custom__', set_name: x.set_name ?? '', quantity: x.quantity ?? 1, purchase_price: x.purchase_price ?? null, current_value: x.current_value ?? null };
+    sf = { name: x.name, game: x.game, product_type: known ? x.product_type : '__custom__', set_name: x.set_name ?? '', quantity: x.quantity ?? 1, purchase_price: x.purchase_price ?? null, current_value: x.current_value ?? null, image_url: x.image_url ?? '' };
     sellPrice = x.current_value ?? null;
     showAdd = true;
   }
@@ -66,7 +67,7 @@
   }
   function startEditGraded(x: GradedCard) {
     editingId = x.id;
-    gf = { name: x.name, set_name: x.set_name ?? '', number: x.number ?? '', company: x.company, grade: x.grade, cert: x.cert ?? '', value: x.value ?? null, purchase_price: x.purchase_price ?? null };
+    gf = { name: x.name, set_name: x.set_name ?? '', number: x.number ?? '', company: x.company, grade: x.grade, cert: x.cert ?? '', value: x.value ?? null, purchase_price: x.purchase_price ?? null, image_url: x.image_url ?? '' };
     showAdd = true;
   }
   async function submitSealed() {
@@ -74,7 +75,7 @@
     const product_type = sf.product_type === '__custom__' ? (customType.trim() || 'Sonstiges') : sf.product_type;
     busy = -1;
     try {
-      const data = { ...sf, name: sf.name.trim(), product_type };
+      const data = { ...sf, name: sf.name.trim(), product_type, image_url: sf.image_url || null };
       if (editingId != null) await updateSealed(editingId, data); else await addSealed(data);
       showAdd = false; editingId = null; resetSealedForm(); await load();
     } catch (e) { status = (e as Error).message; } finally { busy = null; }
@@ -82,7 +83,7 @@
   async function submitGraded() {
     if (!gf.name.trim() || !gf.grade.trim()) return; busy = -1;
     try {
-      const data = { ...gf, name: gf.name.trim() };
+      const data = { ...gf, name: gf.name.trim(), image_url: gf.image_url || null };
       if (editingId != null) await updateGraded(editingId, data); else await addGraded(data);
       showAdd = false; editingId = null; resetGradedForm(); await load();
     } catch (e) { status = (e as Error).message; } finally { busy = null; }
@@ -121,6 +122,7 @@
         <label>Kaufpreis (€)<input type="number" min="0" step="0.01" bind:value={sf.purchase_price} /></label>
         <label>Aktueller Wert (€)<input type="number" min="0" step="0.01" bind:value={sf.current_value} /></label>
       </div>
+      <div class="imgfield"><span class="imgfield-l">Bild (optional)</span><ImageUpload bind:value={sf.image_url} folder="sealed" /></div>
       <button class="primary" onclick={submitSealed} disabled={busy === -1 || !sf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
       {#if editingId != null}
         <div class="sellbox">
@@ -139,6 +141,7 @@
         <label>Wert ($)<input type="number" min="0" step="0.01" bind:value={gf.value} /></label>
         <label>Kaufpreis ($)<input type="number" min="0" step="0.01" bind:value={gf.purchase_price} /></label>
       </div>
+      <div class="imgfield"><span class="imgfield-l">Bild (optional)</span><ImageUpload bind:value={gf.image_url} folder="graded" /></div>
       <button class="primary" onclick={submitGraded} disabled={busy === -1 || !gf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
     {/if}
   </div>
@@ -162,6 +165,7 @@
   <div class="list">
     {#each filteredSealed as x (x.id)}
       <div class="row" class:busy={busy === x.id}>
+        {#if x.image_url}<img class="thumb" src={x.image_url} alt="" loading="lazy" />{/if}
         <div><div class="rn">{x.name}</div><div class="rs">{GAME_LABEL[x.game] ?? x.game} · {x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div></div>
         <div class="rv">
           <div class="rv-now">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : '—'}</div>
@@ -177,6 +181,7 @@
   <div class="list">
     {#each graded as x (x.id)}
       <div class="row" class:busy={busy === x.id}>
+        {#if x.image_url}<img class="thumb" src={x.image_url} alt="" loading="lazy" />{/if}
         <div><div class="rn">{x.name} <span class="grade">{x.company} {x.grade}</span></div><div class="rs">{x.set_name ?? ''}{#if x.number} · {x.number}{/if}{#if x.cert} · Cert {x.cert}{/if}</div></div>
         <div class="rv">
           <div class="rv-now">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : '—'}</div>
@@ -203,6 +208,9 @@
   .addform input, .addform select { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
   .addform .primary { align-self: flex-start; }
   .formtitle { font-weight: 700; font-size: 0.95rem; color: var(--text, #e7e9ee); }
+  .imgfield { display: flex; flex-direction: column; gap: 6px; }
+  .imgfield-l { font-size: 0.8rem; color: var(--muted); }
+  .thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; background: #12151d; border: 1px solid #2a2f3a; flex-shrink: 0; }
   .sellbox { border-top: 1px dashed #2a2f3a; padding-top: 12px; margin-top: 4px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
   .selllabel { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--muted); }
   .selllabel input { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
