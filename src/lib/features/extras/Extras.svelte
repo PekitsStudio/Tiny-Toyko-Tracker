@@ -112,7 +112,10 @@
     {#each sealed as x (x.id)}
       <div class="row" class:busy={busy === x.id}>
         <div><div class="rn">{x.name}</div><div class="rs">{GAME_LABEL[x.game] ?? x.game} · {x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div></div>
-        <div class="rv">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : '—'}</div>
+        <div class="rv">
+          <div class="rv-now">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : '—'}</div>
+          {#if x.purchase_price != null}<div class="rv-ek">EK {fmt(x.purchase_price, x.currency ?? 'EUR')}</div>{/if}
+        </div>
         <button class="edit" onclick={() => startEditSealed(x)} disabled={busy === x.id} title="Bearbeiten">✎</button>
         <button class="del" onclick={() => delSealed(x)} disabled={busy === x.id} title="Löschen">✕</button>
       </div>
@@ -124,7 +127,10 @@
     {#each graded as x (x.id)}
       <div class="row" class:busy={busy === x.id}>
         <div><div class="rn">{x.name} <span class="grade">{x.company} {x.grade}</span></div><div class="rs">{x.set_name ?? ''}{#if x.number} · {x.number}{/if}{#if x.cert} · Cert {x.cert}{/if}</div></div>
-        <div class="rv">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : '—'}</div>
+        <div class="rv">
+          <div class="rv-now">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : '—'}</div>
+          {#if x.purchase_price != null}<div class="rv-ek">EK {fmt(x.purchase_price, x.currency ?? 'USD')}</div>{/if}
+        </div>
         <button class="edit" onclick={() => startEditGraded(x)} disabled={busy === x.id} title="Bearbeiten">✎</button>
         <button class="del" onclick={() => delGraded(x)} disabled={busy === x.id} title="Löschen">✕</button>
       </div>
@@ -153,8 +159,12 @@
   .rn { font-weight: 600; }
   .grade { color: var(--gold, #f5c451); font-size: 0.8rem; margin-left: 6px; }
   .rs { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
-  .rv { color: var(--gold, #f5c451); font-weight: 700; }
-  .edit { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #2a2f3a; background: transparent; color: var(--muted, #9aa0ad); cursor: pointer; }
+  .rv { text-align: right; }
+  .rv-now { color: var(--gold, #f5c451); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rv-ek { color: var(--muted, #9aa0ad); font-size: 0.72rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .edit, .del { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border-radius: 8px; background: transparent; cursor: pointer; font-size: 0.95rem; line-height: 1; }
+  .edit { border: 1px solid #2a2f3a; color: var(--muted, #9aa0ad); }
   .edit:hover { color: var(--accent, #6e7cff); border-color: var(--accent, #6e7cff); }
-  .del { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #3a1620; background: transparent; color: #fca5a5; cursor: pointer; }
+  .del { border: 1px solid #3a1620; color: #fca5a5; }
+  .del:hover { border-color: #fca5a5; }
 </style>
