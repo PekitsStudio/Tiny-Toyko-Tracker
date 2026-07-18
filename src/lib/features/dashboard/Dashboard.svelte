@@ -203,13 +203,14 @@
 
   /* Widget-Raster */
   .widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
-  .w { background: var(--surface, #14181f); border: 1px solid var(--border, #232833); border-radius: 16px; padding: 16px 18px; }
+  .w { background: var(--surface, #14181f); border: 1px solid var(--border, #232833); border-radius: 16px; padding: 16px 18px; overflow: hidden; min-width: 0; }
   .w.wide { grid-column: 1 / -1; }
   .wh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
   .wh h2 { margin: 0; font-size: 1.02rem; }
   .link { background: none; border: 0; color: var(--accent, #6e7cff); cursor: pointer; font: inherit; font-size: 0.85rem; }
 
-  .mcols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .mcols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .mcols > div { min-width: 0; }
   .ml { font-weight: 700; margin-bottom: 6px; font-size: 0.85rem; } .ml.up { color: var(--pos, #37d399); } .ml.down { color: var(--neg, #f2647b); }
   .mrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.82rem; }
   .mrow img, .mph { width: 22px; height: 30px; object-fit: contain; border-radius: 3px; background: #0a0c10; flex-shrink: 0; }
