@@ -5,15 +5,17 @@
   import Settings from '$lib/features/settings/Settings.svelte';
   import Export from '$lib/features/exporting/Export.svelte';
   import Progress from '$lib/features/progress/Progress.svelte';
+  import AvatarShop from '$lib/features/shop/AvatarShop.svelte';
   import { social } from '$lib/stores/social.svelte';
 
-  let sub = $state<'profil' | 'fortschritt' | 'nachrichten' | 'freunde' | 'export' | 'einstellungen'>('profil');
+  let sub = $state<'profil' | 'fortschritt' | 'shop' | 'nachrichten' | 'freunde' | 'export' | 'einstellungen'>('profil');
   $effect(() => { if (social.chatWith) sub = 'nachrichten'; });
 </script>
 
 <div class="subnav">
   <button class:active={sub === 'profil'} onclick={() => (sub = 'profil')}>Mein Profil</button>
   <button class:active={sub === 'fortschritt'} onclick={() => (sub = 'fortschritt')}>Fortschritt</button>
+  <button class:active={sub === 'shop'} onclick={() => (sub = 'shop')}>Avatar-Shop</button>
   <button class:active={sub === 'nachrichten'} onclick={() => (sub = 'nachrichten')}>Nachrichten</button>
   <button class:active={sub === 'freunde'} onclick={() => (sub = 'freunde')}>Freunde</button>
   <button class:active={sub === 'export'} onclick={() => (sub = 'export')}>Import/Export</button>
@@ -22,6 +24,7 @@
 
 {#if sub === 'profil'}<Profile />
 {:else if sub === 'fortschritt'}<Progress />
+{:else if sub === 'shop'}<AvatarShop />
 {:else if sub === 'nachrichten'}<Messages />
 {:else if sub === 'freunde'}<Friends />
 {:else if sub === 'export'}<Export />
