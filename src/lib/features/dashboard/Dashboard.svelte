@@ -239,10 +239,10 @@
   .empty .emoji { font-size: 2rem; }
   .empty .primary { margin-left: auto; padding: 10px 18px; border-radius: 10px; border: 0; background: var(--accent, #6e7cff); color: var(--on-accent, #fff); font-weight: 700; cursor: pointer; }
 
-  /* Widget-Raster */
-  .widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
-  .w { background: var(--surface, #14181f); border: 1px solid var(--border, #232833); border-radius: 16px; padding: 16px 18px; overflow: hidden; min-width: 0; }
-  .w.wide { grid-column: 1 / -1; }
+  /* Widget-Raster: Flexbox, damit übrig gebliebene Widgets die Zeilenbreite füllen */
+  .widgets { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .w { flex: 1 1 340px; background: var(--surface, #14181f); border: 1px solid var(--border, #232833); border-radius: 16px; padding: 16px 18px; overflow: hidden; min-width: 0; }
+  .w.wide { flex-basis: 100%; }
   .prog .plvl { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
   .plv { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--accent, #6e7cff); flex-shrink: 0; }
   .pbarwrap { flex: 1; min-width: 0; }
@@ -293,9 +293,22 @@
   .hm { color: var(--muted, #9aa0ad); font-size: 0.75rem; padding: 2px 10px 10px; }
 
   @media (max-width: 640px) {
-    .hero { padding: 22px 20px; }
-    .hval { font-size: 2.2rem; }
-    .heroimg img { width: 92px; }
+    .hero { padding: 20px 18px; gap: 14px; }
+    .hval { font-size: 2rem; }
+    .hsub { font-size: 0.84rem; }
+    .heroimg img { width: 84px; }
+    .kpis { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+    .kpi { padding: 10px 12px; }
+    .kt b { font-size: 1.1rem; }
+    .widgets { gap: 12px; }
+    .w { flex-basis: 100%; padding: 14px; }
+    .wh h2 { font-size: 0.96rem; }
     .mcols { grid-template-columns: 1fr; gap: 12px; }
+    .tgrid { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
+    .hgrid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  }
+  @media (max-width: 380px) {
+    .kpis { grid-template-columns: 1fr; }
+    .hval { font-size: 1.8rem; }
   }
 </style>
