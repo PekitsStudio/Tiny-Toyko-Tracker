@@ -4,10 +4,17 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
+  import CardFilter from '$lib/components/CardFilter.svelte';
+  import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
 
   let cards = $state<CollectionCard[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
   let refreshing = $state(false); let priceMsg = $state('');
+
+  const getF = (c: CollectionCard): FilterFields => ({ game: c.game, name: c.name, set: c.set_name, rarity: c.rarity, number: c.number, price: c.price_current, date: c.purchase_date });
+  let filter = $state(defaultFilter('name'));
+  const games = $derived(gameCounts(cards, getF));
+  const shownCards = $derived(applyFilter(cards, filter, getF));
 
   async function load() {
     loading = true; status = '';
@@ -62,8 +69,12 @@
   </div>
 </div>
 {#if status}<div class="hint">{status}</div>{/if}
+{#if cards.length}
+  <CardFilter bind:state={filter} {games} sorts={['name', 'price_desc', 'price_asc']} total={cards.length} shown={shownCards.length} />
+{/if}
+{#if cards.length && !shownCards.length}<div class="hint">Keine Karten passen zu Suche/Filter.</div>{/if}
 <div class="grid">
-  {#each cards as c (c.id)}
+  {#each shownCards as c (c.id)}
     <div class="card" class:busy={busy === c.id}>
       <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
       {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => openDetail(c)} />{:else}<div class="ph">kein Bild</div>{/if}

@@ -5,6 +5,8 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
+  import CardFilter from '$lib/components/CardFilter.svelte';
+  import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
 
   type SoldEntry = {
     key: string; kind: 'card' | 'sealed'; id: number; game: string; name: string;
@@ -14,6 +16,11 @@
 
   let items = $state<SoldEntry[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state<string | null>(null);
+
+  const getF = (c: SoldEntry): FilterFields => ({ game: c.game, name: c.name, set: c.sub ?? c.set_name, price: c.sold_price, date: c.sold_date });
+  let filter = $state(defaultFilter('newest'));
+  const games = $derived(gameCounts(items, getF));
+  const shown = $derived(applyFilter(items, filter, getF));
 
   async function load() {
     loading = true; status = '';
@@ -58,8 +65,12 @@
   <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : 'Aktualisieren'}</button>
 </div>
 {#if status}<div class="hint">{status}</div>{/if}
+{#if items.length}
+  <CardFilter bind:state={filter} {games} sorts={['newest', 'oldest', 'price_desc', 'price_asc', 'name']} total={items.length} shown={shown.length} />
+{/if}
+{#if items.length && !shown.length}<div class="hint">Keine Einträge passen zu Suche/Filter.</div>{/if}
 <div class="grid">
-  {#each items as c (c.key)}
+  {#each shown as c (c.key)}
     <div class="card" class:busy={busy === c.key}>
       <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
       {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" />{:else}<div class="ph">{c.kind === 'sealed' ? '📦' : 'kein Bild'}</div>{/if}

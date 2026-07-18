@@ -4,9 +4,16 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
+  import CardFilter from '$lib/components/CardFilter.svelte';
+  import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
 
   let items = $state<WishlistItem[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
+
+  const getF = (w: WishlistItem): FilterFields => ({ game: w.game, name: w.name, set: w.set_name, rarity: w.rarity, number: w.number, price: w.price_current });
+  let filter = $state(defaultFilter('name'));
+  const games = $derived(gameCounts(items, getF));
+  const shown = $derived(applyFilter(items, filter, getF));
 
   async function load() {
     loading = true; status = '';
@@ -39,8 +46,12 @@
 <div class="coll-head"><div><h2>Wunschliste</h2><div class="muted">{items.length} Karten</div></div>
   <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : 'Aktualisieren'}</button></div>
 {#if status}<div class="hint">{status}</div>{/if}
+{#if items.length}
+  <CardFilter bind:state={filter} {games} sorts={['name', 'price_desc', 'price_asc']} total={items.length} shown={shown.length} />
+{/if}
+{#if items.length && !shown.length}<div class="hint">Keine Karten passen zu Suche/Filter.</div>{/if}
 <div class="grid">
-  {#each items as w (w.id)}
+  {#each shown as w (w.id)}
     <div class="card" class:busy={busy === w.id}>
       <span class="tag {w.game}">{GAME_LABEL[w.game] ?? w.game}</span>
       {#if w.image_url}<img src={w.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => openDetail(w)} />{:else}<div class="ph">kein Bild</div>{/if}

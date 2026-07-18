@@ -3,6 +3,8 @@
   import { listSealed, addSealed, updateSealed, deleteSealed, sellSealed, listGraded, addGraded, updateGraded, deleteGraded, type SealedItem, type GradedCard } from '$lib/services/extras.service';
   import { fmt, GAME_LABEL } from '$lib/format';
   import ImageUpload from '$lib/components/ImageUpload.svelte';
+  import CardFilter from '$lib/components/CardFilter.svelte';
+  import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
 
   let mode = $state<'sealed' | 'graded'>('sealed');
   let sealed = $state<SealedItem[]>([]); let graded = $state<GradedCard[]>([]);
@@ -31,11 +33,19 @@
     finally { loading = false; }
   }
   onMount(load);
-  function switchMode(m: 'sealed' | 'graded') { mode = m; showAdd = false; status = ''; load(); }
+  function switchMode(m: 'sealed' | 'graded') { mode = m; showAdd = false; status = ''; filter.q = ''; filter.game = ''; typeFilter = ''; load(); }
 
   const sealedTotal = $derived(sealed.reduce((s, x) => s + (x.current_value ?? 0) * (x.quantity ?? 1), 0));
   const gradedTotal = $derived(graded.reduce((s, x) => s + (x.value ?? 0), 0));
-  const filteredSealed = $derived(typeFilter ? sealed.filter((x) => (x.product_type || '') === typeFilter) : sealed);
+
+  // Gemeinsame Suche/Spiel/Sortierung wie in den anderen Sammlungs-Reitern.
+  let filter = $state(defaultFilter('name'));
+  const getSealed = (x: SealedItem): FilterFields => ({ game: x.game, name: x.name, set: x.set_name, rarity: x.product_type, price: x.current_value });
+  const getGraded = (x: GradedCard): FilterFields => ({ game: '', name: x.name, set: x.set_name, number: x.number, rarity: x.company, price: x.value });
+  const sealedGames = $derived(gameCounts(sealed, getSealed));
+  const byType = $derived(typeFilter ? sealed.filter((x) => (x.product_type || '') === typeFilter) : sealed);
+  const filteredSealed = $derived(applyFilter(byType, filter, getSealed));
+  const shownGraded = $derived(applyFilter(graded, filter, getGraded));
   const sealedTypeCounts = $derived.by(() => {
     const m = new Map<string, number>();
     for (const x of sealed) { const t = x.product_type || '—'; m.set(t, (m.get(t) ?? 0) + 1); }
@@ -166,6 +176,7 @@
 {#if mode === 'sealed'}
   {#if !sealed.length && !loading}<div class="hint">Noch keine versiegelten Produkte.</div>{/if}
   {#if sealed.length}
+    <CardFilter bind:state={filter} games={sealedGames} sorts={['name', 'price_desc', 'price_asc']} total={byType.length} shown={filteredSealed.length} placeholder="Suchen (Name, Set)…" />
     <div class="filterbar">
       <label>Typ filtern
         <select bind:value={typeFilter}>
@@ -198,8 +209,12 @@
   </div>
 {:else}
   {#if !graded.length && !loading}<div class="hint">Noch keine gegradeten Karten.</div>{/if}
+  {#if graded.length}
+    <CardFilter bind:state={filter} sorts={['name', 'price_desc', 'price_asc']} total={graded.length} shown={shownGraded.length} placeholder="Suchen (Name, Set, Nummer)…" />
+  {/if}
+  {#if graded.length && !shownGraded.length}<div class="hint">Keine Karten passen zu Suche/Filter.</div>{/if}
   <div class="grid">
-    {#each graded as x (x.id)}
+    {#each shownGraded as x (x.id)}
       <div class="card" class:busy={busy === x.id}>
         <span class="gbadge {x.company}">{x.company} {x.grade}</span>
         {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditGraded(x)} />{:else}<div class="boxph">🎴</div>{/if}
