@@ -123,17 +123,22 @@
       <button class="x" onclick={close} aria-label="Schließen">✕</button>
       <div class="body">
         {#if c.imageUrl}<img class="big" src={c.imageUrl} alt={c.name} />{:else}<div class="big ph">kein Bild</div>{/if}
-        <div class="info">
+        <div class="head">
           <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
           <h2>{c.name}</h2>
           <div class="line"><Flag lang={c.lang} />{c.setName ?? ''}{#if c.number} · {c.number}{/if}</div>
           {#if c.rarity}<div class="muted">{c.rarity}</div>{/if}
           <div class="prices">
             {#if c.price != null}<div class="big-price">{fmt(c.price, c.currency ?? 'EUR')}</div>{/if}
-            {#if c.priceLow != null}<div class="muted">Ab {fmt(c.priceLow, c.currency ?? 'EUR')}</div>{/if}
-            {#if c.priceTrend != null}<div class="muted">Trend {fmt(c.priceTrend, c.currency ?? 'EUR')}</div>{/if}
+            <div class="subprices">
+              {#if c.priceLow != null}<span class="muted">Ab {fmt(c.priceLow, c.currency ?? 'EUR')}</span>{/if}
+              {#if c.priceTrend != null}<span class="muted">Trend {fmt(c.priceTrend, c.currency ?? 'EUR')}</span>{/if}
+            </div>
           </div>
           {#if c.cardmarketUrl}<a href={c.cardmarketUrl} target="_blank" rel="noopener" class="cm">Auf Cardmarket ansehen ↗</a>{/if}
+        </div>
+
+        <div class="sections">
           {#if c.externalId}
             <div class="alert">
               <h3>Preisalarm</h3>
@@ -149,11 +154,9 @@
           {#if c.cardId}
             <div class="edit">
               <h3>Bearbeiten</h3>
-              <div class="row2">
+              <div class="egrid">
                 <label>Zustand<select bind:value={ed.condition}>{#each CONDITIONS as x}<option>{x}</option>{/each}</select></label>
                 <label>Sprache<select bind:value={ed.language}>{#each langOptions as x}<option>{x}</option>{/each}</select></label>
-              </div>
-              <div class="row2">
                 <label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label>
                 <label>Kaufpreis<input type="number" min="0" step="0.01" bind:value={ed.purchasePrice} /></label>
                 <label>Kaufdatum<input type="date" bind:value={ed.purchaseDate} /></label>
@@ -161,7 +164,7 @@
               <label>Notiz<textarea rows="2" bind:value={ed.notes}></textarea></label>
               <div class="sale">
                 <label class="chk"><input type="checkbox" bind:checked={sale.forSale} /> Zum Verkauf anbieten</label>
-                {#if sale.forSale}<label>Preis<input type="number" min="0" step="0.01" bind:value={sale.askingPrice} /></label>{/if}
+                {#if sale.forSale}<label class="salep">Preis<input type="number" min="0" step="0.01" bind:value={sale.askingPrice} /></label>{/if}
               </div>
               <div class="saverow">
                 <button class="save" onclick={saveCard} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
@@ -176,7 +179,7 @@
             <div class="edit">
               <h3>Öffentlich suchen</h3>
               <label class="chk"><input type="checkbox" bind:checked={seek.seeking} /> Diese Karte im Marktplatz suchen</label>
-              {#if seek.seeking}<label>Höchstpreis<input type="number" min="0" step="0.01" bind:value={seek.maxPrice} /></label>{/if}
+              {#if seek.seeking}<label class="salep">Höchstpreis<input type="number" min="0" step="0.01" bind:value={seek.maxPrice} /></label>{/if}
               <div class="saverow">
                 <button class="save" onclick={saveSeek} disabled={saving}>{saving ? '…' : 'Speichern'}</button>
                 {#if savedMsg}<span class="saved">{savedMsg}</span>{/if}
@@ -210,20 +213,24 @@
   .ov { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
   .dlg { position: relative; background: var(--surface, #171a23); border: 1px solid #2a2f3a; border-radius: 16px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; }
   .x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 999px; border: 1px solid #2a2f3a; background: rgba(0,0,0,0.3); color: inherit; cursor: pointer; z-index: 2; }
-  .body { display: flex; align-items: flex-start; gap: 22px; padding: 22px; flex-wrap: wrap; }
-  .big { width: 230px; max-width: 45vw; aspect-ratio: 5/7; object-fit: contain; background: #0a0c10; border-radius: 12px; align-self: flex-start; position: sticky; top: 0; flex-shrink: 0; }
-  .info { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
-  .info h2 { margin: 4px 0; font-size: 1.35rem; }
+  .body { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 6px 24px; padding: 22px; align-items: start; }
+  .big { grid-column: 1; grid-row: 1; width: 230px; max-width: 45vw; aspect-ratio: 5/7; object-fit: contain; background: #0a0c10; border-radius: 12px; }
+  .head { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .head h2 { margin: 2px 0; font-size: 1.45rem; }
+  .sections { grid-column: 1 / -1; display: flex; flex-direction: column; margin-top: 8px; }
+  .egrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .line { display: flex; align-items: center; color: var(--muted); }
   .muted { color: var(--muted, #9aa0ad); font-size: 0.9rem; }
-  .big-price { color: var(--gold, #f5c451); font-weight: 800; font-size: 1.5rem; }
+  .prices { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .subprices { display: flex; gap: 14px; flex-wrap: wrap; }
+  .big-price { color: var(--gold, #f5c451); font-weight: 800; font-size: 1.6rem; }
   .cm { color: var(--accent, #6366f1); text-decoration: none; }
   .edit { margin-top: 12px; border-top: 1px solid #2a2f3a; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
   .edit h3 { margin: 0 0 2px; font-size: 1rem; }
   .edit label { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; color: var(--muted); flex: 1; }
-  .row2 { display: flex; gap: 10px; flex-wrap: wrap; }
-  .edit select, .edit input, .edit textarea { padding: 7px 9px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; }
-  .sale { border-top: 1px dashed #2a2f3a; padding-top: 8px; margin-top: 2px; display: flex; flex-direction: column; gap: 8px; }
+  .edit select, .edit input, .edit textarea { padding: 8px 10px; border-radius: 8px; border: 1px solid #2a2f3a; background: #12151d; color: var(--text, #e7e9ee); font: inherit; width: 100%; }
+  .salep { max-width: 200px; }
+  .sale { border-top: 1px dashed #2a2f3a; padding-top: 10px; margin-top: 8px; display: flex; flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; }
   .chk { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
   .chk input { width: auto; }
   .saverow { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
@@ -248,10 +255,8 @@
   @media (max-width: 560px) {
     .ov { padding: 0; align-items: flex-end; }
     .dlg { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; border-bottom: 0; }
-    .body { padding: 16px; gap: 14px; }
-    .big { width: 100%; max-width: 240px; margin: 0 auto; position: static; }
-    .info { min-width: 0; width: 100%; }
-    .row2 { gap: 8px; }
-    .row2 label { flex: 1 1 45%; }
+    .body { grid-template-columns: 1fr; padding: 16px; gap: 10px; }
+    .big { grid-column: 1; justify-self: center; width: 100%; max-width: 240px; }
+    .head, .sections { grid-column: 1; }
   }
 </style>
