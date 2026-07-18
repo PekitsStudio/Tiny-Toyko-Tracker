@@ -27,6 +27,11 @@ export interface MarketCard {
 	seller_country: string | null;
 	seller_id: string;
 	is_mine: boolean;
+	seller_rating: number | null;
+	seller_rating_count: number | null;
+	seller_fb_avg: number | null;
+	seller_fb_count: number | null;
+	seller_verified: boolean | null;
 }
 
 export async function listMarket(opts: { game?: string; q?: string } = {}): Promise<MarketCard[]> {

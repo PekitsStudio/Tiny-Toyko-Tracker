@@ -5,6 +5,7 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
+  import { marketView } from '$lib/stores/marketview.svelte';
   import { profileView } from '$lib/stores/profileview.svelte';
   import { nav } from '$lib/stores/nav.svelte';
 
@@ -31,7 +32,7 @@
   onMount(load);
 
   function openProfile(id?: string | null) { if (id) profileView.open(id); }
-  function openOffer(m: MarketCard) { detail.open({ game: m.game, name: m.name, imageUrl: m.image_url, setName: m.set_name, number: m.number, rarity: m.rarity, lang: m.language, price: m.asking_price, currency: m.currency, cardmarketUrl: m.cardmarket_url, condition: m.condition }); }
+  function openOffer(m: MarketCard) { marketView.open(m); }
   function openSeek(s: SeekingCard) { detail.open({ game: s.game, name: s.name, imageUrl: s.image_url, setName: s.set_name, number: s.number, rarity: s.rarity, lang: s.language, price: s.seek_max_price, currency: s.seek_currency, cardmarketUrl: s.cardmarket_url, condition: s.seek_condition }); }
 
   async function buy(m: MarketCard) {

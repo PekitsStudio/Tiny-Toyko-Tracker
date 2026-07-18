@@ -7,6 +7,7 @@
   import ProfileSection from '$lib/sections/ProfileSection.svelte';
   import CardDetail from '$lib/components/CardDetail.svelte';
   import PublicProfile from '$lib/components/PublicProfile.svelte';
+  import MarketDetail from '$lib/components/MarketDetail.svelte';
   import { nav } from '$lib/stores/nav.svelte';
 </script>
 
@@ -30,6 +31,7 @@
 
 <CardDetail />
 <PublicProfile />
+<MarketDetail />
 
 <style>
   .tabs {
