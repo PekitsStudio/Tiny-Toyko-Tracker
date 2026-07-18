@@ -2,6 +2,7 @@
   import { profileView } from '$lib/stores/profileview.svelte';
   import { getPublicProfile, getUserFeedback, getAvatar, type PublicProfile, type FeedbackEntry } from '$lib/services/profile.service';
   import { listRatings, rateUser, deleteRating, type UserRating } from '$lib/services/ratings.service';
+  import { levelFromXp } from '$lib/services/gamification.service';
   import { listMarketBySeller, type MarketCard } from '$lib/services/market.service';
   import { fmt } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
@@ -85,6 +86,7 @@
           </div>
           <div class="sub">{#if prof.country}{prof.country} · {/if}Mitglied seit {since(prof.member_since)}</div>
           <div class="stats">
+            <span class="stat lvl">⭐ Level {levelFromXp(prof.points ?? 0).level}</span>
             {#if prof.rank != null}<span class="stat">Rang #{prof.rank}</span>{/if}
             {#if prof.points != null}<span class="stat">{prof.points} Punkte</span>{/if}
             {#if prof.fb_count != null && prof.fb_count > 0}

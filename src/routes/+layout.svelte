@@ -10,6 +10,7 @@
 	import Legal from '$lib/components/Legal.svelte';
 	import { legal } from '$lib/stores/legal.svelte';
 	import { loadApiKeyIntoAdapter, initPricing } from '$lib/services/settings.service';
+	import { touchLogin } from '$lib/services/gamification.service';
 	import '../app.css';
 
 	let { children } = $props();
@@ -18,6 +19,7 @@
 		initPricing();
 		await auth.init();
 		loadApiKeyIntoAdapter();
+		touchLogin();
 	});
 </script>
 
