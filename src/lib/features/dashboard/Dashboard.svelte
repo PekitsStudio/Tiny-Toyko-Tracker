@@ -4,6 +4,8 @@
   import { unreadCount } from '$lib/services/social.service';
   import { topMovers, friendsActivity, type Mover, type Activity } from '$lib/services/dashboard.service';
   import { getValueHistory } from '$lib/services/stats.service';
+  import { getLevel } from '$lib/services/gamification.service';
+  import { getQuests, claimQuest, type QuestData, type Quest } from '$lib/services/quests.service';
   import { discoverShowcases, type Showcase } from '$lib/services/showcase.service';
   import { listAlerts, type PriceAlert } from '$lib/services/alerts.service';
   import { nav } from '$lib/stores/nav.svelte';
@@ -18,6 +20,8 @@
   let activity = $state<Activity[]>([]);
   let alerts = $state<PriceAlert[]>([]);
   let trend = $state<{ change: number; pct: number; since: string } | null>(null);
+  let lvl = $state<{ level: number; into: number; need: number } | null>(null);
+  let dq = $state<QuestData | null>(null); let cp = $state(0);
   let loading = $state(false); let err = $state('');
 
   const hitAlerts = $derived(alerts.filter((a) => a.triggered));
@@ -41,6 +45,8 @@
         const h = await getValueHistory();
         if (h.length >= 2) { const a = h[h.length - 2], b = h[h.length - 1]; const ch = b.total - a.total; trend = { change: ch, pct: a.total ? (ch / a.total) * 100 : 0, since: a.day }; }
       } catch { trend = null; }
+      try { lvl = await getLevel(); } catch { lvl = null; }
+      try { dq = await getQuests(); cp = dq.cp; } catch { dq = null; }
     } catch (e) {
       const m = (e as Error).message;
       err = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden, um dein Dashboard zu sehen.' : m;
@@ -49,6 +55,7 @@
   onMount(load);
 
   function sinceLabel(d: string): string { try { return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }); } catch { return d; } }
+  async function claimQ(q: Quest) { try { cp = await claimQuest(q); q.claimed = true; if (dq) dq = { ...dq }; } catch { /* egal */ } }
   function openDetail(c: CollectionCard) {
     detail.open({ game: c.game, name: c.name, imageUrl: c.image_url, setName: c.set_name, number: c.number, rarity: c.rarity, lang: c.language, price: c.price_current, currency: c.currency, condition: c.condition, quantity: c.quantity, cardId: c.id, notes: c.notes, forSale: c.for_sale, askingPrice: c.asking_price });
   }
@@ -98,7 +105,38 @@
   {/if}
 
   <!-- Widget-Raster -->
+  {#snippet miniQuest(q: Quest)}
+    <div class="mq" class:mqd={q.done}>
+      <span class="mqi">{q.icon}</span>
+      <div class="mqm">
+        <div class="mqt">{q.text}</div>
+        <div class="mqbar"><span style="width:{Math.min(100, (q.progress / q.target) * 100).toFixed(0)}%"></span></div>
+      </div>
+      {#if q.claimed}<span class="mqtag ok">✓</span>
+      {:else if q.done}<button class="mqclaim" onclick={() => claimQ(q)}>+{q.cp}</button>
+      {:else}<span class="mqnum">{Math.min(q.progress, q.target)}/{q.target}</span>{/if}
+    </div>
+  {/snippet}
+
   <div class="widgets">
+    {#if lvl}
+      <section class="w wide prog">
+        <div class="wh"><h2>🎯 Fortschritt</h2><button class="link" onclick={() => nav.go('profil')}>Details →</button></div>
+        <div class="plvl">
+          <span class="plv">Lv {lvl.level}</span>
+          <div class="pbarwrap">
+            <div class="pbar"><span style="width:{Math.max(3, (lvl.into / lvl.need) * 100).toFixed(0)}%"></span></div>
+            <span class="pxp muted">{lvl.into}/{lvl.need} XP · 🪙 {cp} CP</span>
+          </div>
+        </div>
+        {#if dq}
+          <div class="pcols">
+            <div><div class="pcolh">☀️ Heute</div>{#each dq.daily as q (q.id)}{@render miniQuest(q)}{/each}</div>
+            <div><div class="pcolh">🗓️ Diese Woche</div>{#each dq.weekly as q (q.id)}{@render miniQuest(q)}{/each}</div>
+          </div>
+        {/if}
+      </section>
+    {/if}
     {#if gainers.length || losers.length}
       <section class="w">
         <div class="wh"><h2>Preisbewegungen</h2><span class="muted small">seit Hinzufügen</span></div>
@@ -205,6 +243,24 @@
   .widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
   .w { background: var(--surface, #14181f); border: 1px solid var(--border, #232833); border-radius: 16px; padding: 16px 18px; overflow: hidden; min-width: 0; }
   .w.wide { grid-column: 1 / -1; }
+  .prog .plvl { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .plv { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--accent, #6e7cff); flex-shrink: 0; }
+  .pbarwrap { flex: 1; min-width: 0; }
+  .pbar { height: 12px; background: #12151d; border-radius: 999px; overflow: hidden; }
+  .pbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent, #6e7cff), var(--accent-2, #8a7bff)); border-radius: 999px; }
+  .pxp { font-size: 0.76rem; }
+  .pcols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pcolh { font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; }
+  .mq { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .mqi { font-size: 1rem; flex-shrink: 0; }
+  .mqm { flex: 1; min-width: 0; } .mqt { font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mqbar { height: 5px; background: #12151d; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+  .mqbar span { display: block; height: 100%; background: var(--accent, #6e7cff); border-radius: 999px; }
+  .mq.mqd .mqbar span { background: var(--gold, #f5c451); }
+  .mqnum { font-size: 0.72rem; color: var(--muted, #9aa0ad); min-width: 28px; text-align: right; }
+  .mqtag.ok { color: var(--pos, #86efac); font-weight: 700; }
+  .mqclaim { padding: 4px 10px; border-radius: 7px; border: 0; background: var(--accent, #6e7cff); color: var(--on-accent, #fff); font-weight: 700; font-size: 0.72rem; cursor: pointer; }
+  @media (max-width: 560px) { .pcols { grid-template-columns: 1fr; gap: 12px; } }
   .wh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
   .wh h2 { margin: 0; font-size: 1.02rem; }
   .link { background: none; border: 0; color: var(--accent, #6e7cff); cursor: pointer; font: inherit; font-size: 0.85rem; }

@@ -97,7 +97,9 @@ export async function claimQuest(q: Quest): Promise<number> {
 	if (claimed.includes(cid)) return cp;
 	if (q.progress < q.target) throw new Error('Quest noch nicht abgeschlossen.');
 	cp += q.cp;
-	claimed = [...claimed, cid].slice(-80);
+	// Achievement-Eintraege (ach:*) dauerhaft behalten, Quest-Eintraege begrenzen.
+	claimed = [...claimed, cid];
+	claimed = [...claimed.filter((x) => x.startsWith('ach:')), ...claimed.filter((x) => !x.startsWith('ach:')).slice(-80)];
 	const { error } = await supabase().from('user_settings').upsert({ user_id: uid, cp, claimed_quests: claimed }, { onConflict: 'user_id' });
 	if (error) throw new Error(error.message);
 	return cp;
