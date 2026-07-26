@@ -12,7 +12,7 @@
   import { fmt, GAME_LABEL } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
 
-  let value = $state(0); let cardCount = $state(0); let uniqueCount = $state(0);
+  let value = $state<Record<string, number>>({}); let cardCount = $state(0); let uniqueCount = $state(0);
   let wishCount = $state(0); let offerCount = $state(0); let unread = $state(0);
   let top = $state<CollectionCard[]>([]);
   let gainers = $state<Mover[]>([]); let losers = $state<Mover[]>([]);
@@ -32,7 +32,10 @@
       const cards = await listCards();
       uniqueCount = cards.length;
       cardCount = cards.reduce((s, c) => s + (c.quantity ?? 1), 0);
-      value = cards.reduce((s, c) => s + (c.price_current ?? 0) * (c.quantity ?? 1), 0);
+      // Wert pro Waehrung getrennt (EUR/USD nicht vermischen).
+      const vByCur: Record<string, number> = {};
+      for (const c of cards) { const cur = c.currency || 'EUR'; vByCur[cur] = (vByCur[cur] ?? 0) + (c.price_current ?? 0) * (c.quantity ?? 1); }
+      value = vByCur;
       offerCount = cards.filter((c) => c.for_sale).length;
       top = [...cards].filter((c) => (c.price_current ?? 0) > 0).sort((a, b) => (b.price_current ?? 0) * (b.quantity ?? 1) - (a.price_current ?? 0) * (a.quantity ?? 1)).slice(0, 6);
       wishCount = (await listWishlist()).length;
@@ -55,6 +58,11 @@
   onMount(load);
 
   function sinceLabel(d: string): string { try { return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }); } catch { return d; } }
+  // Betraege pro Waehrung anzeigen (z. B. "1.234 € · 78 $").
+  function money(m: Record<string, number>): string {
+    const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
+    return e.length ? e.map(([c, v]) => fmt(v, c)).join(' · ') : fmt(0);
+  }
   async function claimQ(q: Quest) { try { cp = await claimQuest(q); q.claimed = true; if (dq) dq = { ...dq }; } catch { /* egal */ } }
   function openDetail(c: CollectionCard) {
     detail.open({ game: c.game, name: c.name, imageUrl: c.image_url, setName: c.set_name, number: c.number, rarity: c.rarity, lang: c.language, price: c.price_current, currency: c.currency, condition: c.condition, quantity: c.quantity, cardId: c.id, notes: c.notes, forSale: c.for_sale, askingPrice: c.asking_price });
@@ -68,7 +76,7 @@
   <section class="hero">
     <div class="hmain">
       <div class="eyebrow">Deine Sammlung</div>
-      <div class="hval">{fmt(value)}</div>
+      <div class="hval">{money(value)}</div>
       <div class="hsub">
         {cardCount} Karten · {uniqueCount} verschiedene
         {#if trend}

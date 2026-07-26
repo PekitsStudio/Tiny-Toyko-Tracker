@@ -155,8 +155,8 @@
             <div class="edit">
               <h3>Bearbeiten</h3>
               <div class="egrid">
-                <label>Zustand<select bind:value={ed.condition}>{#each CONDITIONS as x}<option>{x}</option>{/each}</select></label>
-                <label>Sprache<select bind:value={ed.language}>{#each langOptions as x}<option>{x}</option>{/each}</select></label>
+                <label>Zustand<select bind:value={ed.condition}>{#each CONDITIONS as x (x)}<option>{x}</option>{/each}</select></label>
+                <label>Sprache<select bind:value={ed.language}>{#each langOptions as x (x)}<option>{x}</option>{/each}</select></label>
                 <label>Menge<input type="number" min="1" bind:value={ed.quantity} /></label>
                 <label>Kaufpreis<input type="number" min="0" step="0.01" bind:value={ed.purchasePrice} /></label>
                 <label>Kaufdatum<input type="date" bind:value={ed.purchaseDate} /></label>

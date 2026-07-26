@@ -131,10 +131,10 @@
     {#if mode === 'sealed'}
       <div class="grid2">
         <label>Name<input bind:value={sf.name} placeholder="z. B. Display Obsidian Flames" /></label>
-        <label>Spiel<select bind:value={sf.game}>{#each GAMES as g}<option value={g}>{GAME_LABEL[g] ?? g}</option>{/each}</select></label>
+        <label>Spiel<select bind:value={sf.game}>{#each GAMES as g (g)}<option value={g}>{GAME_LABEL[g] ?? g}</option>{/each}</select></label>
         <label>Produkttyp
           <select bind:value={sf.product_type}>
-            {#each SEALED_TYPES as t}<option value={t}>{t}</option>{/each}
+            {#each SEALED_TYPES as t (t)}<option value={t}>{t}</option>{/each}
             <option value="__custom__">Sonstiges…</option>
           </select>
         </label>
@@ -157,7 +157,7 @@
         <label>Name<input bind:value={gf.name} placeholder="z. B. Charizard" /></label>
         <label>Set<input bind:value={gf.set_name} placeholder="Set (optional)" /></label>
         <label>Nummer<input bind:value={gf.number} placeholder="z. B. 4/102" /></label>
-        <label>Firma<select bind:value={gf.company}>{#each COMPANIES as c}<option>{c}</option>{/each}</select></label>
+        <label>Firma<select bind:value={gf.company}>{#each COMPANIES as c (c)}<option>{c}</option>{/each}</select></label>
         <label>Grade<input bind:value={gf.grade} placeholder="z. B. 10, 9.5" /></label>
         <label>Zertifikat<input bind:value={gf.cert} placeholder="Cert-Nr. (optional)" /></label>
         <label>Wert ($)<input type="number" min="0" step="0.01" bind:value={gf.value} /></label>

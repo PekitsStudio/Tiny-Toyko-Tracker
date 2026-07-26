@@ -54,7 +54,7 @@
 </script>
 
 <div class="rooms">
-  {#each CHAT_ROOMS as r}
+  {#each CHAT_ROOMS as r (r.id)}
     <button class:active={room === r.id} onclick={() => switchRoom(r.id)}>{r.label}</button>
   {/each}
 </div>

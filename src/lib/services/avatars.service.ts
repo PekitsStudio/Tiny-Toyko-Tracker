@@ -48,15 +48,14 @@ async function uidOrNull(): Promise<string | null> {
 	return data.user?.id ?? null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isFolder(e: any): boolean { return e && e.id === null; }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isImage(e: any): boolean { return e && e.id !== null && /\.(jpe?g|png|webp|gif)$/i.test(e.name); }
+interface StorageEntry { id: string | null; name: string }
+function isFolder(e: StorageEntry): boolean { return !!e && e.id === null; }
+function isImage(e: StorageEntry): boolean { return !!e && e.id !== null && /\.(jpe?g|png|webp|gif)$/i.test(e.name); }
 
-async function listRaw(prefix: string): Promise<unknown[]> {
+async function listRaw(prefix: string): Promise<StorageEntry[]> {
 	const { data, error } = await supabase().storage.from(BUCKET).list(prefix, { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
 	if (error) throw new Error(error.message);
-	return data ?? [];
+	return (data ?? []) as StorageEntry[];
 }
 
 function pretty(s: string): string {
@@ -87,17 +86,17 @@ export async function getShop(): Promise<ShopData> {
 	const roots = await listRaw('');
 	for (const r of roots) {
 		if (!isFolder(r)) continue;
-		const cKey = (r as { name: string }).name;
+		const cKey = r.name;
 		const sets: ShopSet[] = [];
 		const subs = await listRaw(cKey);
 		for (const s of subs) {
 			if (!isFolder(s)) continue;
-			const sKey = (s as { name: string }).name;
+			const sKey = s.name;
 			const files = await listRaw(`${cKey}/${sKey}`);
 			const avatars: ShopAvatar[] = [];
 			for (const f of files) {
 				if (!isImage(f)) continue;
-				const fname = (f as { name: string }).name;
+				const fname = f.name;
 				const path = `${cKey}/${sKey}/${fname}`;
 				const { rarity, name } = parseFile(fname);
 				const { data } = supabase().storage.from(BUCKET).getPublicUrl(path);

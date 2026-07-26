@@ -196,7 +196,7 @@
   <div class="col-stats">{cards.length} Karten · 💬 {sc.comment_count ?? 0} · 🔔 {sc.follower_count ?? 0} Follower{#if sc.created_at} · erstellt {new Date(sc.created_at).toLocaleDateString('de-DE')}{/if}</div>
 
   <div class="col-actions">
-    {#each REACTIONS as r}
+    {#each REACTIONS as r (r.kind)}
       <button class="col-react" class:on={(sc.my_reactions ?? []).includes(r.kind)} onclick={() => react(sc!, r.kind, r.countKey)}>{r.emoji} {sc[r.countKey] ?? 0}</button>
     {/each}
     {#if !sc.is_mine}<button class="col-follow" class:on={sc.followed} onclick={() => follow(sc!)}>{sc.followed ? '🔔 Folge ich' : '🔔 Folgen'}</button>{/if}

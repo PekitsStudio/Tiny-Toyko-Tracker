@@ -16,11 +16,11 @@
       {#if pokeHits.length === 0}
         <div class="ac-empty">Kein Pokémon gefunden.</div>
       {:else}
-        {#each pokeHits as h}
+        {#each pokeHits as h (h.enName)}
           <div class="ac-row">
             <div class="ac-label">{h.enName} — Sprache zum Suchen wählen:</div>
             <div class="ac-chips">
-              {#each h.chips as ch}
+              {#each h.chips as ch (ch.lang)}
                 <button type="button" class="ac-chip" onclick={() => onpick?.(ch.name, ch.lang)}>
                   <span class="fl">{flagFor(ch.lang) || ch.lang.toUpperCase()}</span>{ch.name}
                 </button>
@@ -33,7 +33,7 @@
       {#if opHits.length === 0}
         <div class="ac-empty">Keine Karte gefunden.</div>
       {:else}
-        {#each opHits as n}
+        {#each opHits as n (n)}
           <button type="button" class="ac-simple" onclick={() => onpick?.(n, 'en')}>{n}</button>
         {/each}
       {/if}

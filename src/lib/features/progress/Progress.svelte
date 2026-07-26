@@ -156,7 +156,7 @@
     <div class="ppick">
       <select bind:value={path}>
         <option value="">— keiner —</option>
-        {#each COLLECTOR_PATHS as c}<option value={c.key}>{c.icon} {c.label}</option>{/each}
+        {#each COLLECTOR_PATHS as c (c.key)}<option value={c.key}>{c.icon} {c.label}</option>{/each}
       </select>
       <button class="save" onclick={savePath} disabled={pathBusy}>{pathBusy ? '…' : 'Wechseln'}</button>
     </div>

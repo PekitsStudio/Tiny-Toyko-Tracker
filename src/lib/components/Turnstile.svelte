@@ -7,6 +7,7 @@
 
 	onMount(() => {
 		if (!TURNSTILE_SITE_KEY) return;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const w = window as unknown as { turnstile?: any; _tsOnload?: () => void };
 		const render = () => {
 			try {

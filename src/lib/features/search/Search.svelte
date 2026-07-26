@@ -145,7 +145,7 @@
   <p class="sh-sub">Durchsuche Pokémon, Magic, Yu-Gi-Oh, One Piece und Riftbound – nach Name oder Nummer.</p>
 
   <div class="sh-games">
-    {#each GAMES as g}
+    {#each GAMES as g (g.id)}
       <button type="button" class="sh-game" class:active={game === g.id}
         onclick={() => { game = g.id; onQueryInput(); }}>{g.label}</button>
     {/each}
@@ -177,7 +177,7 @@
   {#if recent.length}
     <div class="sh-suggest">
       <span class="muted">Zuletzt:</span>
-      {#each recent as r}
+      {#each recent as r (r)}
         <button type="button" class="chip" onclick={() => { query = r; doSearch(); }}>{r}</button>
       {/each}
     </div>
@@ -191,10 +191,10 @@
   <div class="filterbar row">
     <span><span class="flabel">Set</span>
       <select bind:value={filters.set}><option value="">alle</option>
-        {#each facets.sets as s}<option>{s}</option>{/each}</select></span>
+        {#each facets.sets as s (s)}<option>{s}</option>{/each}</select></span>
     <span><span class="flabel">Seltenheit</span>
       <select bind:value={filters.rarity}><option value="">alle</option>
-        {#each facets.rarities as r}<option>{r}</option>{/each}</select></span>
+        {#each facets.rarities as r (r)}<option>{r}</option>{/each}</select></span>
     {#if facets.langs.length > 1}
       <span><span class="flabel">Sprache</span>
         <select bind:value={filters.lang}><option value="">alle</option>

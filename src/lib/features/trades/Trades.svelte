@@ -2,9 +2,10 @@
   import { onMount } from 'svelte';
   import { listTrades, updateTrade, giveFeedback, myRatedTradeIds, type Trade, type TradeStatus } from '$lib/services/trade.service';
   import { fmt } from '$lib/format';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let trades = $state<Trade[]>([]);
-  let rated = $state<Set<number>>(new Set());
+  const rated = new SvelteSet<number>();
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
 
   let ratingFor = $state<number | null>(null);
@@ -14,7 +15,8 @@
     loading = true; status = '';
     try {
       trades = await listTrades();
-      rated = new Set(await myRatedTradeIds());
+      rated.clear();
+      for (const id of await myRatedTradeIds()) rated.add(id);
       if (!trades.length) status = 'Noch keine Trades.';
     } catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
     finally { loading = false; }
@@ -102,17 +104,17 @@
           <div class="rrow">
             <span class="rl">Sterne</span>
             <div class="stars">
-              {#each [1, 2, 3, 4, 5] as s}
+              {#each [1, 2, 3, 4, 5] as s (s)}
                 <button type="button" class="star" class:on={form.stars >= s} onclick={() => (form.stars = s)}>★</button>
               {/each}
             </div>
           </div>
           <label class="chk"><input type="checkbox" bind:checked={form.recommend} /> Würde wieder mit {partnerName(t)} handeln</label>
           <div class="cats">
-            {#each CATS as [key, lbl]}
+            {#each CATS as [key, lbl] (key)}
               <label>{lbl}
                 <select bind:value={form[key]}>
-                  <option value={0}>–</option>{#each [1, 2, 3, 4, 5] as n}<option value={n}>{n}</option>{/each}
+                  <option value={0}>–</option>{#each [1, 2, 3, 4, 5] as n (n)}<option value={n}>{n}</option>{/each}
                 </select>
               </label>
             {/each}

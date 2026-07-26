@@ -62,6 +62,7 @@
       const rows = parseCsv(await file.text()).filter((r) => r.some((c) => c.trim() !== ''));
       if (rows.length < 2) throw new Error('Keine Datenzeilen gefunden.');
       const headers = rows[0].map((h) => h.trim().toLowerCase());
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- lokale, nicht-reaktive Lookup-Map
       const h2f = new Map(EXPORT_COLUMNS.map(([h, f]) => [h.toLowerCase(), f]));
       const items = rows.slice(1).map((r) => {
         const o: Record<string, string> = {};

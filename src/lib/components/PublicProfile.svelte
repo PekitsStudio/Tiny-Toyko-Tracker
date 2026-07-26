@@ -139,7 +139,7 @@
             <div class="ratehead">
               <span class="ratelbl">{myRating ? 'Deine Bewertung' : 'Diesen Sammler bewerten'}</span>
               <span class="starpick">
-                {#each [1, 2, 3, 4, 5] as n}
+                {#each [1, 2, 3, 4, 5] as n (n)}
                   <button type="button" class="starbtn" class:on={n <= myStars} onclick={() => (myStars = n)} aria-label={`${n} Sterne`}>★</button>
                 {/each}
               </span>
