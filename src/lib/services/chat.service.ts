@@ -2,7 +2,7 @@ import { supabase } from '$lib/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // Live-Chat-Raeume je Spiel (chat_messages, Realtime aktiviert).
-export type ChatRoom = 'general' | 'pokemon' | 'magic' | 'yugioh' | 'onepiece';
+export type ChatRoom = 'general' | 'pokemon' | 'magic' | 'yugioh' | 'onepiece' | 'riftbound';
 
 export interface ChatMessage {
 	id: number;
@@ -19,7 +19,8 @@ export const CHAT_ROOMS: { id: ChatRoom; label: string }[] = [
 	{ id: 'pokemon', label: 'Pokémon' },
 	{ id: 'magic', label: 'Magic' },
 	{ id: 'yugioh', label: 'Yu-Gi-Oh' },
-	{ id: 'onepiece', label: 'One Piece' }
+	{ id: 'onepiece', label: 'One Piece' },
+	{ id: 'riftbound', label: 'Riftbound' }
 ];
 
 // Die letzten Nachrichten eines Raums (chronologisch: aelteste zuerst).

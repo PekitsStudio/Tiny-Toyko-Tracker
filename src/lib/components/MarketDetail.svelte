@@ -89,6 +89,7 @@
   .tag { position: static; display: inline-block; align-self: flex-start; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 9px; border-radius: 999px; color: #15110a; background: var(--gold, #f5c451); }
   .tag.pokemon { background: var(--pokemon, #ffcb05); } .tag.magic { background: var(--magic, #7f9cf5); color: #fff; }
   .tag.yugioh { background: var(--yugioh, #c07be0); color: #fff; } .tag.onepiece { background: var(--onepiece, #f2566e); color: #fff; }
+  .tag.riftbound { background: var(--riftbound, #e0912e); color: #fff; }
   .right h3 { margin: 10px 0 2px; font-size: 1.4rem; }
   .sub { display: flex; align-items: center; color: var(--muted, #9aa0ad); font-size: 0.86rem; }
 

@@ -18,7 +18,7 @@
     --gold:#f2b85a; --gold-weak:rgba(242,184,90,.14);
     --pos:#37d399; --neg:#f2647b;
     /* TCG-Akzente */
-    --pokemon:#ffcb05; --magic:#7f9cf5; --yugioh:#c07be0; --onepiece:#f2566e; --lorcana:#2bc4c4;
+    --pokemon:#ffcb05; --magic:#7f9cf5; --yugioh:#c07be0; --onepiece:#f2566e; --lorcana:#2bc4c4; --riftbound:#e0912e;
     /* Form */
     --radius:14px; --r-xs:8px; --r-sm:10px; --r:14px; --r-lg:18px;
     --shadow-sm:0 1px 2px rgba(0,0,0,.35), 0 1px 1px rgba(0,0,0,.25);
@@ -138,6 +138,7 @@
   .tag { position:absolute; top:9px; left:9px; font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; padding:4px 8px; border-radius:999px; color:#15110a; background:var(--gold); box-shadow:var(--shadow-sm); }
   .tag.pokemon{background:var(--pokemon);} .tag.magic{background:var(--magic);color:#fff;}
   .tag.yugioh{background:var(--yugioh);color:#fff;} .tag.onepiece{background:var(--onepiece);color:#fff;}
+  .tag.riftbound{background:var(--riftbound);color:#fff;}
   .card .add { background:var(--surface-2); color:var(--text); border-top:1px solid var(--border); border-radius:0; padding:11px; font-size:.8rem; font-weight:600; box-shadow:none; }
   .card .add:hover { background:var(--accent); color:var(--on-accent); transform:none; }
   .card img[data-act="detail"], .lname[data-act="detail"] { cursor:zoom-in; }

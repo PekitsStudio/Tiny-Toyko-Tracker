@@ -9,7 +9,7 @@ export class SearchService {
 
   // Vorschlagsmenue ist namensbasiert -> in Nummernsuche / anderen Spielen aus.
   shouldAutocomplete(game: Game, mode: SearchMode, q: string): boolean {
-    return mode !== 'number' && q.length >= 2 && (game === 'pokemon' || game === 'onepiece');
+    return mode !== 'number' && q.length >= 2 && (game === 'pokemon' || game === 'onepiece' || game === 'riftbound');
   }
 
   async pokeAuto(q: string): Promise<{ langs: string[]; hits: PokeHit[] }> {
@@ -28,6 +28,12 @@ export class SearchService {
 
   async opAuto(q: string): Promise<string[]> {
     const names = await this.repo.opNames();
+    const t = q.toLowerCase();
+    return names.filter((n) => n.toLowerCase().includes(t)).slice(0, 12);
+  }
+
+  async rbAuto(q: string): Promise<string[]> {
+    const names = await this.repo.rbNames();
     const t = q.toLowerCase();
     return names.filter((n) => n.toLowerCase().includes(t)).slice(0, 12);
   }

@@ -13,7 +13,7 @@
 
   const GAMES = [
     { id: '', label: 'Alle' }, { id: 'pokemon', label: 'Pokémon' }, { id: 'magic', label: 'Magic' },
-    { id: 'yugioh', label: 'Yu-Gi-Oh' }, { id: 'onepiece', label: 'One Piece' }
+    { id: 'yugioh', label: 'Yu-Gi-Oh' }, { id: 'onepiece', label: 'One Piece' }, { id: 'riftbound', label: 'Riftbound' }
   ];
   let mode = $state<'angebote' | 'suche'>(only ?? 'angebote');
   let game = $state(''); let q = $state('');

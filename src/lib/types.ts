@@ -1,4 +1,4 @@
-export type Game = 'pokemon' | 'magic' | 'yugioh' | 'onepiece' | 'lorcana';
+export type Game = 'pokemon' | 'magic' | 'yugioh' | 'onepiece' | 'lorcana' | 'riftbound';
 export type Visibility = 'private' | 'unlisted' | 'public';
 export type Plan = 'free' | 'pro';
 export type SearchMode = 'name' | 'number';

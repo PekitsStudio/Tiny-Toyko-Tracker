@@ -54,7 +54,7 @@ export async function addPostComment(postId: number, body: string): Promise<void
 }
 
 // ---------- Forum ----------
-export type ForumCategory = 'general' | 'pokemon' | 'magic' | 'yugioh' | 'onepiece' | 'offtopic';
+export type ForumCategory = 'general' | 'pokemon' | 'magic' | 'yugioh' | 'onepiece' | 'riftbound' | 'offtopic';
 export interface ForumThread {
 	id: number; category: string; user_id: string; author_name: string | null; author_country: string | null;
 	title: string; body: string; created_at: string; last_activity: string; reply_count: number;

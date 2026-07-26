@@ -32,6 +32,7 @@
     ],
     yugioh: [['de', 'Deutsch'], ['en', 'English'], ['fr', 'Français'], ['it', 'Italiano'], ['pt', 'Português']],
     onepiece: [['en', 'English']],
+    riftbound: [['en', 'English']],
   };
 
   function langFor(game, lang) {
@@ -83,7 +84,7 @@
   }
 
   function cmSearchUrl(game, name) {
-    const path = { pokemon: 'Pokemon', yugioh: 'YuGiOh', onepiece: 'One-Piece' }[game] || 'Pokemon';
+    const path = { pokemon: 'Pokemon', yugioh: 'YuGiOh', onepiece: 'One-Piece', riftbound: 'Riftbound' }[game] || 'Pokemon';
     return `https://www.cardmarket.com/de/${path}/Products/Search?searchString=${encodeURIComponent(name)}`;
   }
 
@@ -647,8 +648,59 @@
     return matches.slice(0, SAFETY_MAX).map(mapOnePiece);
   }
 
-  const GAMES = { pokemon: searchPokemon, magic: searchMagic, yugioh: searchYugioh, onepiece: searchOnePiece };
-  const NUMBER_SEARCH = { pokemon: true, magic: true, yugioh: false, onepiece: true };
+  // --- Riftbound (LoL-TCG): lokale Kartenliste aus Riots offizieller Galerie ----
+  // Keine kostenlose Live-Preis-API mit CORS verfuegbar -> Karten kommen aus
+  // static/riftbound-cards.json (einmal geladen + gecacht). Preise bleiben null,
+  // dafuer gibt es einen Cardmarket-Such-Link. Neue Sets: JSON neu erzeugen.
+  let rbCache = null;
+  async function loadRiftbound() {
+    if (rbCache) return rbCache;
+    let data;
+    try { data = await (await fetch('riftbound-cards.json')).json(); } catch { data = null; }
+    if (!data || !Array.isArray(data.cards)) data = { base: '', cards: [] };
+    rbCache = data;
+    return rbCache;
+  }
+  function mapRiftbound(c, base) {
+    return {
+      game: 'riftbound', externalId: c.id, name: c.name,
+      setName: c.setName ?? null, setCode: c.setCode ?? null, number: c.num ?? null,
+      rarity: c.rarity ?? null, imageUrl: c.img ? (base || '') + c.img : null,
+      cardmarketPrice: null, priceLow: null, priceTrend: null, currency: 'EUR',
+      cardmarketUrl: cmSearchUrl('riftbound', c.name),
+      extra: { type: c.type ?? null, domain: Array.isArray(c.domain) ? c.domain.join('/') : (c.domain ?? null), energy: c.energy ?? null, might: c.might ?? null },
+      needsDetail: false,
+    };
+  }
+  async function searchRiftbound(q, opts) {
+    const mode = (opts && opts.mode) || 'name';
+    const { base, cards } = await loadRiftbound();
+    let matches;
+    if (mode === 'number') {
+      const raw = String(q || '').trim();
+      let setPart = null, numStr = null, m;
+      if ((m = raw.match(/^\s*([A-Za-z]{2,4})\s*[-\s]?\s*(\d{1,4})\s*$/))) { setPart = m[1]; numStr = m[2]; }
+      else { const g = raw.match(/\d{1,4}/); numStr = g ? g[0] : null; }
+      if (numStr == null) return [];
+      const n = String(parseInt(numStr, 10));
+      matches = cards.filter((c) => {
+        const okNum = c.num === n || String(parseInt(c.num, 10)) === n;
+        const okSet = !setPart || String(c.setCode || '').toUpperCase() === setPart.toUpperCase();
+        return okNum && okSet;
+      });
+    } else {
+      const t = q.toLowerCase();
+      matches = cards.filter((c) => String(c.name || '').toLowerCase().includes(t));
+    }
+    return matches.slice(0, SAFETY_MAX).map((c) => mapRiftbound(c, base));
+  }
+  async function riftboundNames() {
+    const { cards } = await loadRiftbound();
+    return [...new Set(cards.map((c) => c.name).filter(Boolean))].sort();
+  }
+
+  const GAMES = { pokemon: searchPokemon, magic: searchMagic, yugioh: searchYugioh, onepiece: searchOnePiece, riftbound: searchRiftbound };
+  const NUMBER_SEARCH = { pokemon: true, magic: true, yugioh: false, onepiece: true, riftbound: true };
 
   // --- Set-Suche ---------------------------------------------------------------
   const setListCache = {};
@@ -693,6 +745,14 @@
         for (const r of (all || [])) {
           const k = r.set_name;
           if (k && !seen.has(k)) seen.set(k, { game, name: r.set_name, code: r.set_id || null, logo: null, releaseDate: null, search: String(r.set_name).toLowerCase() });
+        }
+        list = [...seen.values()];
+      } else if (game === 'riftbound') {
+        const { cards } = await loadRiftbound();
+        const seen = new Map();
+        for (const c of (cards || [])) {
+          const k = c.setCode;
+          if (k && !seen.has(k)) seen.set(k, { game, name: c.setName || k, code: k, logo: null, releaseDate: null, search: String((c.setName || '') + ' ' + k).toLowerCase() });
         }
         list = [...seen.values()];
       }
@@ -799,4 +859,4 @@
     return { price: null, low: null, trend: null };
   }
   const SUPPORTED_GAMES = Object.keys(GAMES);
-  export const Adapters = { LANGUAGES, NUMBER_SEARCH, SUPPORTED_GAMES, langFor, search, fetchPrices, enrichPokemon, searchGraded, searchSets, onePieceNames, setPokePriceKey, setJpPriceConfig };
+  export const Adapters = { LANGUAGES, NUMBER_SEARCH, SUPPORTED_GAMES, langFor, search, fetchPrices, enrichPokemon, searchGraded, searchSets, onePieceNames, riftboundNames, setPokePriceKey, setJpPriceConfig };

@@ -3,7 +3,7 @@
   import { listThreads, createThread, deleteThread, listThreadReplies, addThreadReply, type ForumThread, type ForumReply, type ForumCategory } from '$lib/services/community.service';
   import { auth } from '$lib/stores/auth.svelte';
 
-  const CATS: [ForumCategory | '', string][] = [['', 'Alle'], ['general', 'Allgemein'], ['pokemon', 'Pokémon'], ['magic', 'Magic'], ['yugioh', 'Yu-Gi-Oh'], ['onepiece', 'One Piece'], ['offtopic', 'Offtopic']];
+  const CATS: [ForumCategory | '', string][] = [['', 'Alle'], ['general', 'Allgemein'], ['pokemon', 'Pokémon'], ['magic', 'Magic'], ['yugioh', 'Yu-Gi-Oh'], ['onepiece', 'One Piece'], ['riftbound', 'Riftbound'], ['offtopic', 'Offtopic']];
 
   let cat = $state<ForumCategory | ''>('');
   let threads = $state<ForumThread[]>([]);

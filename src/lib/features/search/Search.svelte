@@ -14,6 +14,7 @@
   const GAMES: { id: Game; label: string }[] = [
     { id: 'pokemon', label: 'Pokémon' }, { id: 'magic', label: 'Magic' },
     { id: 'yugioh', label: 'Yu-Gi-Oh' }, { id: 'onepiece', label: 'One Piece' },
+    { id: 'riftbound', label: 'Riftbound' },
   ];
   const LANGS = ['', 'de', 'en', 'fr', 'it', 'es', 'ja'];
 
@@ -53,7 +54,7 @@
         if (query.trim() !== q) return;
         pokeHits = hits; acKind = 'poke'; acOpen = true;
       } else {
-        const hits = await service.opAuto(q);
+        const hits = game === 'riftbound' ? await service.rbAuto(q) : await service.opAuto(q);
         if (query.trim() !== q) return;
         opHits = hits; acKind = 'op'; acOpen = true;
       }
@@ -141,7 +142,7 @@
 
 <div class="search-hero">
   <h1 class="sh-title">Welche Karte suchst du heute?</h1>
-  <p class="sh-sub">Durchsuche Pokémon, Magic, Yu-Gi-Oh und One Piece – nach Name oder Nummer.</p>
+  <p class="sh-sub">Durchsuche Pokémon, Magic, Yu-Gi-Oh, One Piece und Riftbound – nach Name oder Nummer.</p>
 
   <div class="sh-games">
     {#each GAMES as g}

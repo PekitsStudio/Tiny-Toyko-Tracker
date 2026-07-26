@@ -37,6 +37,7 @@ export const COLLECTOR_PATHS: { key: string; label: string; icon: string }[] = [
 	{ key: 'pokemon', label: 'Pokémon-Professor', icon: '🔴' },
 	{ key: 'magic', label: 'Magic-Archivar', icon: '🔵' },
 	{ key: 'onepiece', label: 'One-Piece-Pirat', icon: '🏴‍☠️' },
+	{ key: 'riftbound', label: 'Runeterra-Champion', icon: '⚔️' },
 	{ key: 'market', label: 'Markthändler', icon: '💰' },
 	{ key: 'community', label: 'Community-Legende', icon: '🌟' }
 ];

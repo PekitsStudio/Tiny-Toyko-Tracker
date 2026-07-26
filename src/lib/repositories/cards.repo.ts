@@ -11,6 +11,7 @@ export interface CardsRepo {
 	search(p: { game: Game; q: string; lang: string; mode: SearchMode }): Promise<SearchCard[]>;
 	enrich(ids: string[], lang: string): Promise<Record<string, EnrichDetail>>;
 	opNames(): Promise<string[]>;
+	rbNames(): Promise<string[]>;
 	pokeI18n(): Promise<PokeI18n>;
 }
 
@@ -25,10 +26,12 @@ const A = Adapters as unknown as {
 	) => Promise<SearchCard[]>;
 	enrichPokemon: (ids: string[], opts: { lang: string }) => Promise<Record<string, EnrichDetail>>;
 	onePieceNames: () => Promise<string[]>;
+	riftboundNames: () => Promise<string[]>;
 };
 
 export class AdapterCardsRepo implements CardsRepo {
 	private _op: string[] | null = null;
+	private _rb: string[] | null = null;
 	private _poke: PokeI18n | null = null;
 
 	async search(p: { game: Game; q: string; lang: string; mode: SearchMode }): Promise<SearchCard[]> {
@@ -47,6 +50,16 @@ export class AdapterCardsRepo implements CardsRepo {
 			this._op = [];
 		}
 		return this._op;
+	}
+
+	async rbNames(): Promise<string[]> {
+		if (this._rb) return this._rb;
+		try {
+			this._rb = (await A.riftboundNames()) || [];
+		} catch {
+			this._rb = [];
+		}
+		return this._rb;
 	}
 
 	async pokeI18n(): Promise<PokeI18n> {

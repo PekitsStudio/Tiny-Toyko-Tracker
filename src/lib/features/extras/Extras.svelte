@@ -15,7 +15,7 @@
   let typeFilter = $state('');
   let sellPrice = $state<number | null>(null);
 
-  const GAMES = ['pokemon', 'magic', 'yugioh', 'onepiece'];
+  const GAMES = ['pokemon', 'magic', 'yugioh', 'onepiece', 'riftbound'];
   const COMPANIES = ['PSA', 'BGS', 'CGC', 'SGC', 'Andere'];
   const SEALED_TYPES = [
     'Display / Booster Box', 'Elite Trainer Box (ETB)', 'Booster-Bundle', 'Booster Pack',

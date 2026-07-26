@@ -1,7 +1,7 @@
 import type { SearchCard } from '$lib/types';
 
 export const GAME_LABEL: Record<string, string> = {
-  pokemon: 'Pokémon', magic: 'Magic', yugioh: 'Yu-Gi-Oh', onepiece: 'One Piece',
+  pokemon: 'Pokémon', magic: 'Magic', yugioh: 'Yu-Gi-Oh', onepiece: 'One Piece', riftbound: 'Riftbound',
 };
 
 export const FLAGS: Record<string, string> = {
@@ -37,5 +37,6 @@ export function extraLine(c: SearchCard): string {
   if (c.game === 'magic') return [e.typeLine, e.manaCost].filter(Boolean).join('  ');
   if (c.game === 'yugioh') return [e.type, e.atk != null ? `ATK ${e.atk}` : null, e.def != null ? `DEF ${e.def}` : null].filter(Boolean).join(' · ');
   if (c.game === 'onepiece') return [e.type, e.color, e.power != null ? `Power ${e.power}` : null].filter(Boolean).join(' · ');
+  if (c.game === 'riftbound') return [e.type, e.domain, e.energy != null ? `${e.energy} Energie` : null, e.might != null ? `${e.might} Macht` : null].filter(Boolean).join(' · ');
   return '';
 }
