@@ -63,7 +63,7 @@ function pretty(s: string): string {
 }
 
 // "common-Meister-Sammler-Cardax.jpg" -> { rarity:'common', name:'Meister Sammler Cardax' }
-function parseFile(file: string): { rarity: string; name: string } {
+export function parseFile(file: string): { rarity: string; name: string } {
 	const base = file.replace(/\.[^.]+$/, '').trim();
 	const i = base.indexOf('-');
 	if (i > 0) {

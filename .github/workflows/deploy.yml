@@ -22,7 +22,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+          cache: npm
+      # Reproduzierbare Installation aus der package-lock.json.
+      - run: npm ci --no-audit --no-fund
+      # Unit-Tests der Rechenlogik (nur Node-Projekt, kein Browser noetig) – blockiert bei Fehlern.
+      - run: npx vitest run --project server
+      # Typ- und Lint-Pruefung: vorerst nicht blockierend, bis format/eslint --fix lokal gelaufen ist.
+      # Zum Aktivieren einfach die beiden continue-on-error-Zeilen entfernen.
+      - run: npm run check
+        continue-on-error: true
+      - run: npm run lint
+        continue-on-error: true
       - run: npm run build
         env:
           BASE_PATH: /Tiny-Toyko-Tracker

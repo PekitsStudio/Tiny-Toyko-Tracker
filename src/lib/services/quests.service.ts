@@ -2,10 +2,12 @@ import { supabase } from '$lib/supabase';
 
 // --- Zeit-Helfer ---
 function startOfDayISO(): string { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); }
-function startOfWeek(): Date { const d = new Date(); const off = (d.getDay() + 6) % 7; d.setDate(d.getDate() - off); d.setHours(0, 0, 0, 0); return d; }
+// Montag 00:00 der Woche von `base` (Standard: jetzt). Klont `base`, mutiert es nicht.
+export function startOfWeek(base: Date = new Date()): Date { const d = new Date(base.getTime()); const off = (d.getDay() + 6) % 7; d.setDate(d.getDate() - off); d.setHours(0, 0, 0, 0); return d; }
 function todayStr(): string { return new Date().toISOString().slice(0, 10); }
-function isoWeekId(): string {
-	const d = new Date(); d.setHours(0, 0, 0, 0);
+// ISO-Wochen-Kennung "YYYY-Www" von `base` (Standard: jetzt).
+export function isoWeekId(base: Date = new Date()): string {
+	const d = new Date(base.getTime()); d.setHours(0, 0, 0, 0);
 	d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7)); // Donnerstag dieser Woche
 	const week1 = new Date(d.getFullYear(), 0, 4);
 	const wk = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
