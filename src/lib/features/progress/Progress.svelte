@@ -199,7 +199,7 @@
       {/if}
       <div class="oreward">🎁 Belohnung: <b>+{sel.cp} CP</b></div>
       {#if sel.claimable}
-        <button class="oclaim" onclick={() => claimAch(sel)} disabled={claimingId === sel.claimId}>{claimingId === sel.claimId ? '…' : `Belohnung einlösen (+${sel.cp} CP)`}</button>
+        <button class="oclaim" onclick={() => claimAch(sel!)} disabled={claimingId === sel.claimId}>{claimingId === sel.claimId ? '…' : `Belohnung einlösen (+${sel.cp} CP)`}</button>
       {:else if sel.reached >= 0}
         <div class="odone">✓ Freigeschaltet – Belohnung erhalten</div>
       {:else}

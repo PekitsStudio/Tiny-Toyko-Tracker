@@ -56,11 +56,12 @@ export async function listMarketBySeller(sellerId: string): Promise<MarketCard[]
 }
 
 export async function setForSale(cardId: number, forSale: boolean, askingPrice: number | null): Promise<void> {
-	await requireUser();
+	const uid = await requireUser();
 	const { error } = await supabase()
 		.from('cards')
 		.update({ for_sale: forSale, asking_price: forSale ? askingPrice : null })
-		.eq('id', cardId);
+		.eq('id', cardId)
+		.eq('user_id', uid);
 	if (error) throw new Error(error.message);
 }
 

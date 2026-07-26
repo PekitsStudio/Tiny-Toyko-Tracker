@@ -47,7 +47,9 @@ export async function createTrade(t: {
 export async function updateTrade(id: number, fields: { status?: TradeStatus; proposer_done?: boolean; responder_done?: boolean; price?: number }): Promise<void> {
 	const patch: Record<string, unknown> = {};
 	for (const k of ['status', 'proposer_done', 'responder_done', 'price'] as const) { if (fields[k] !== undefined) patch[k] = fields[k]; }
-	const { error } = await supabase().from('trades').update(patch).eq('id', id);
+	// Nur Beteiligte (Anbieter/Empfaenger) duerfen einen Trade aendern.
+	const me = await requireUser();
+	const { error } = await supabase().from('trades').update(patch).eq('id', id).or(`proposer.eq.${me},responder.eq.${me}`);
 	if (error) throw new Error(error.message);
 }
 

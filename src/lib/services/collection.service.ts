@@ -64,6 +64,7 @@ export async function addWishlist(c: SearchCard) {
 	const existing = await supabase()
 		.from('wishlist')
 		.select('id')
+		.eq('user_id', user_id)
 		.eq('game', c.game)
 		.eq('external_id', c.externalId)
 		.eq('language', language)

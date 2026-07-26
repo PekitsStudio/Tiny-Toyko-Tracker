@@ -22,7 +22,7 @@
 </script>
 
 <div class="grid">
-  {#each cards as c}
+  {#each cards as c (c.externalId ?? `${c.game}:${c.setCode ?? ''}:${c.number ?? ''}:${c.name}`)}
     <div class="card">
       <span class="tag {c.game}">{GAME_LABEL[c.game]}</span>
       {#if c.imageUrl}

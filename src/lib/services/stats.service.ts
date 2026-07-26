@@ -2,16 +2,30 @@ import { supabase } from '$lib/supabase';
 import { listCards, listSold, type CollectionCard } from '$lib/services/collection.service';
 import { listSealed, listGraded } from '$lib/services/extras.service';
 
-export interface Bucket { key: string; count: number; value: number; }
+// Geldbetraege werden pro Waehrung getrennt gefuehrt (EUR/USD gemischt), damit
+// nichts faelschlich als ein Euro-Wert aufsummiert wird.
+export type Money = Record<string, number>;
+export interface Bucket { key: string; count: number; value: number; currency?: string; }
 export interface TopCard { id: number; name: string; image_url: string | null; game: string; value: number; quantity: number; currency: string | null; }
 
 export interface Stats {
 	cardCount: number; uniqueCount: number;
-	value: number; invested: number; unrealized: number;
-	realized: number; soldProceeds: number;
+	value: Money; invested: Money; unrealized: Money;
+	realized: Money; soldProceeds: Money;
 	byGame: Bucket[]; byRarity: Bucket[]; bySet: Bucket[]; byCondition: Bucket[]; byLanguage: Bucket[];
 	topCards: TopCard[];
-	sealedValue: number; gradedValue: number;
+	sealedValue: Money; gradedValue: number;
+}
+
+// Hilfsfunktionen fuer Betraege pro Waehrung.
+function addMoney(m: Money, currency: string | null | undefined, amount: number): void {
+	const c = currency || 'EUR';
+	m[c] = (m[c] ?? 0) + amount;
+}
+export function mergeMoney(...maps: Money[]): Money {
+	const out: Money = {};
+	for (const m of maps) for (const [c, v] of Object.entries(m)) out[c] = (out[c] ?? 0) + v;
+	return out;
 }
 
 function bucketize(cards: CollectionCard[], keyFn: (c: CollectionCard) => string | null | undefined): Bucket[] {
@@ -31,27 +45,33 @@ function bucketize(cards: CollectionCard[], keyFn: (c: CollectionCard) => string
 export async function computeStats(): Promise<Stats> {
 	const [cards, sold, sealed, graded] = await Promise.all([listCards(), listSold(), listSealed(), listGraded()]);
 
-	let cardCount = 0, value = 0, invValue = 0, invested = 0;
-	const games = new Map<string, { count: number; value: number }>();
+	let cardCount = 0;
+	const value: Money = {}, invValue: Money = {}, invested: Money = {};
+	const games = new Map<string, { count: number; value: number; currency: string }>();
 	for (const c of cards) {
 		const q = c.quantity ?? 1;
+		const cur = c.currency || 'EUR';
 		cardCount += q;
 		const v = (c.price_current ?? 0) * q;
-		value += v;
-		if (c.purchase_price != null) { invested += c.purchase_price * q; invValue += (c.price_current ?? 0) * q; }
-		const g = games.get(c.game) ?? { count: 0, value: 0 };
-		g.count += q; g.value += v; games.set(c.game, g);
+		addMoney(value, cur, v);
+		if (c.purchase_price != null) { addMoney(invested, cur, c.purchase_price * q); addMoney(invValue, cur, (c.price_current ?? 0) * q); }
+		const g = games.get(c.game) ?? { count: 0, value: 0, currency: cur };
+		g.count += q; g.value += v; g.currency = cur; games.set(c.game, g);
 	}
-	const unrealized = invValue - invested;
+	const unrealized: Money = {};
+	for (const cur of new Set([...Object.keys(invValue), ...Object.keys(invested)])) {
+		unrealized[cur] = (invValue[cur] ?? 0) - (invested[cur] ?? 0);
+	}
 
-	let realized = 0, soldProceeds = 0;
+	const realized: Money = {}, soldProceeds: Money = {};
 	for (const s of sold) {
-		const q = s.quantity ?? 1;
-		if (s.sold_price != null) soldProceeds += s.sold_price * q;
-		if (s.sold_price != null && s.purchase_price != null) realized += (s.sold_price - s.purchase_price) * q;
+		const q = s.quantity ?? 1; const cur = s.currency || 'EUR';
+		if (s.sold_price != null) addMoney(soldProceeds, cur, s.sold_price * q);
+		if (s.sold_price != null && s.purchase_price != null) addMoney(realized, cur, (s.sold_price - s.purchase_price) * q);
 	}
 
-	const sealedValue = sealed.reduce((a, x) => a + (x.current_value ?? 0) * (x.quantity ?? 1), 0);
+	const sealedValue: Money = {};
+	for (const x of sealed) addMoney(sealedValue, x.currency, (x.current_value ?? 0) * (x.quantity ?? 1));
 	const gradedValue = graded.reduce((a, x) => a + (x.value ?? 0), 0);
 
 	const topCards: TopCard[] = [...cards]
@@ -62,7 +82,7 @@ export async function computeStats(): Promise<Stats> {
 
 	return {
 		cardCount, uniqueCount: cards.length, value, invested, unrealized, realized, soldProceeds,
-		byGame: [...games.entries()].map(([game, g]) => ({ key: game, ...g })).sort((a, b) => b.value - a.value),
+		byGame: [...games.entries()].map(([game, g]) => ({ key: game, count: g.count, value: g.value, currency: g.currency })).sort((a, b) => b.value - a.value),
 		byRarity: bucketize(cards, (c) => c.rarity).slice(0, 10),
 		bySet: bucketize(cards, (c) => c.set_name).slice(0, 10),
 		byCondition: bucketize(cards, (c) => c.condition),

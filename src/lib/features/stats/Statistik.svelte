@@ -1,8 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { computeStats, recordSnapshot, getValueHistory, type Stats, type Bucket, type HistPoint } from '$lib/services/stats.service';
+  import { computeStats, recordSnapshot, getValueHistory, mergeMoney, type Stats, type Bucket, type Money, type HistPoint } from '$lib/services/stats.service';
   import { fmt, GAME_LABEL } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
+
+  // Betraege pro Waehrung anzeigen (z. B. "1.234,56 € · 78,90 $").
+  function money(m: Money): string {
+    const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
+    return e.length ? e.map(([c, v]) => fmt(v, c)).join(' · ') : fmt(0);
+  }
+  function moneySigned(m: Money): string {
+    const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
+    return e.length ? e.map(([c, v]) => (v >= 0 ? '+' : '') + fmt(v, c)).join(' · ') : fmt(0);
+  }
+  const allNonNeg = (m: Money): boolean => Object.values(m).every((v) => v >= 0);
 
   let s = $state<Stats | null>(null);
   let history = $state<HistPoint[]>([]);
@@ -12,14 +23,15 @@
     loading = true; status = '';
     try {
       s = await computeStats();
-      try { await recordSnapshot(s.value); } catch { /* Snapshot optional */ }
+      // Verlauf speichert nur den EUR-Anteil (keine Wechselkurse -> keine Mischsumme).
+      try { await recordSnapshot(s.value['EUR'] ?? 0); } catch { /* Snapshot optional */ }
       try { history = await getValueHistory(); } catch { history = []; }
     } catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
     finally { loading = false; }
   }
   onMount(load);
 
-  const cardsPlusSealed = $derived(s ? s.value + s.sealedValue : 0);
+  const cardsPlusSealed = $derived<Money>(s ? mergeMoney(s.value, s.sealedValue) : {});
   function maxVal(items: Bucket[]): number { return items.reduce((m, b) => Math.max(m, b.value), 0) || 1; }
   function shortDay(d: string): string { try { return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }); } catch { return d; } }
 
@@ -46,20 +58,20 @@
 
 {#if s}
   <div class="cards">
-    <div class="stat big"><div class="l">Sammlungswert (Karten)</div><div class="v gold">{fmt(s.value)}</div><div class="sub">{s.cardCount} Karten · {s.uniqueCount} verschiedene</div></div>
-    <div class="stat"><div class="l">Investiert</div><div class="v">{fmt(s.invested)}</div></div>
-    <div class="stat"><div class="l">Unrealisiert</div><div class="v" class:pos={s.unrealized >= 0} class:neg={s.unrealized < 0}>{s.unrealized >= 0 ? '+' : ''}{fmt(s.unrealized)}</div></div>
-    <div class="stat"><div class="l">Realisiert (verkauft)</div><div class="v" class:pos={s.realized >= 0} class:neg={s.realized < 0}>{s.realized >= 0 ? '+' : ''}{fmt(s.realized)}</div></div>
-    <div class="stat"><div class="l">Verkaufserlös gesamt</div><div class="v">{fmt(s.soldProceeds)}</div></div>
-    <div class="stat"><div class="l">Sealed-Wert</div><div class="v">{fmt(s.sealedValue)}</div></div>
+    <div class="stat big"><div class="l">Sammlungswert (Karten)</div><div class="v gold">{money(s.value)}</div><div class="sub">{s.cardCount} Karten · {s.uniqueCount} verschiedene</div></div>
+    <div class="stat"><div class="l">Investiert</div><div class="v">{money(s.invested)}</div></div>
+    <div class="stat"><div class="l">Unrealisiert</div><div class="v" class:pos={allNonNeg(s.unrealized)} class:neg={!allNonNeg(s.unrealized)}>{moneySigned(s.unrealized)}</div></div>
+    <div class="stat"><div class="l">Realisiert (verkauft)</div><div class="v" class:pos={allNonNeg(s.realized)} class:neg={!allNonNeg(s.realized)}>{moneySigned(s.realized)}</div></div>
+    <div class="stat"><div class="l">Verkaufserlös gesamt</div><div class="v">{money(s.soldProceeds)}</div></div>
+    <div class="stat"><div class="l">Sealed-Wert</div><div class="v">{money(s.sealedValue)}</div></div>
     <div class="stat"><div class="l">Graded-Wert</div><div class="v">{fmt(s.gradedValue, 'USD')}</div></div>
-    <div class="stat big"><div class="l">Gesamt (Karten + Sealed)</div><div class="v gold">{fmt(cardsPlusSealed)}</div></div>
+    <div class="stat big"><div class="l">Gesamt (Karten + Sealed)</div><div class="v gold">{money(cardsPlusSealed)}</div></div>
   </div>
 
   {#if chart}
     <div class="chartbox">
       <div class="charthead">
-        <h3>📈 Wertverlauf (Karten)</h3>
+        <h3>📈 Wertverlauf (Karten, EUR)</h3>
         <span class="muted">{shortDay(chart.last.day)} · {fmt(chart.last.total)}</span>
       </div>
       <svg viewBox="0 0 {CW} {CH}" class="chart" preserveAspectRatio="none" role="img" aria-label="Wertverlauf">
@@ -105,7 +117,7 @@
   <div class="anrows">
     <div class="ancard"><h3>🎮 Nach Spiel</h3>
       {#each s.byGame as g (g.key)}
-        <div class="bar-row"><span class="bl">{GAME_LABEL[g.key] ?? g.key}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (g.value / maxVal(s.byGame)) * 100).toFixed(0)}%"></span></span><span class="bv">{fmt(g.value)}</span></div>
+        <div class="bar-row"><span class="bl">{GAME_LABEL[g.key] ?? g.key}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (g.value / maxVal(s.byGame)) * 100).toFixed(0)}%"></span></span><span class="bv">{fmt(g.value, g.currency ?? 'EUR')}</span></div>
       {/each}
     </div>
     {#if s.byRarity.length}<div class="ancard"><h3>✨ Nach Seltenheit</h3>{@render bars(s.byRarity)}</div>{/if}

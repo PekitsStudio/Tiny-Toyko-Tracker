@@ -31,7 +31,8 @@ export async function createPost(p: { kind: PostKind; title: string; body: strin
 	if (error) throw new Error(error.message);
 }
 export async function deletePost(id: number): Promise<void> {
-	const { error } = await supabase().from('community_posts').delete().eq('id', id);
+	const uid = await requireUser();
+	const { error } = await supabase().from('community_posts').delete().eq('id', id).eq('user_id', uid);
 	if (error) throw new Error(error.message);
 }
 export async function toggleLikePost(postId: number, liked: boolean): Promise<void> {
@@ -73,7 +74,8 @@ export async function createThread(t: { category: ForumCategory; title: string; 
 	if (error) throw new Error(error.message);
 }
 export async function deleteThread(id: number): Promise<void> {
-	const { error } = await supabase().from('forum_threads').delete().eq('id', id);
+	const uid = await requireUser();
+	const { error } = await supabase().from('forum_threads').delete().eq('id', id).eq('user_id', uid);
 	if (error) throw new Error(error.message);
 }
 export async function listThreadReplies(threadId: number): Promise<ForumReply[]> {

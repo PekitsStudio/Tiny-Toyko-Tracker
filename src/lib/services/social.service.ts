@@ -26,7 +26,8 @@ export async function sendMessage(toUser: string, body: string, cardName?: strin
 }
 export async function markRead(ids: number[]): Promise<void> {
 	if (!ids.length) return;
-	const { error } = await supabase().from('messages').update({ read: true }).in('id', ids);
+	const uid = await requireUser();
+	const { error } = await supabase().from('messages').update({ read: true }).in('id', ids).eq('to_user', uid);
 	if (error) throw new Error(error.message);
 }
 export async function unreadCount(): Promise<number> {
@@ -66,11 +67,14 @@ export async function sendFriendRequest(addressee: string): Promise<void> {
 	if (error) throw new Error(error.message);
 }
 export async function acceptFriend(id: number): Promise<void> {
-	const { error } = await supabase().from('friendships').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', id);
+	// Nur der Empfaenger einer offenen Anfrage darf annehmen (nicht der Absender).
+	const uid = await requireUser();
+	const { error } = await supabase().from('friendships').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', id).eq('addressee', uid).eq('status', 'pending');
 	if (error) throw new Error(error.message);
 }
 export async function removeFriend(id: number): Promise<void> {
-	const { error } = await supabase().from('friendships').delete().eq('id', id);
+	const uid = await requireUser();
+	const { error } = await supabase().from('friendships').delete().eq('id', id).or(`requester.eq.${uid},addressee.eq.${uid}`);
 	if (error) throw new Error(error.message);
 }
 
