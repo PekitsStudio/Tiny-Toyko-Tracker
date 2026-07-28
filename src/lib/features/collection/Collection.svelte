@@ -6,6 +6,7 @@
   import { detail } from '$lib/stores/detail.svelte';
   import CardFilter from '$lib/components/CardFilter.svelte';
   import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
+  import { i18n } from '$lib/i18n.svelte';
 
   let cards = $state<CollectionCard[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
@@ -18,8 +19,8 @@
 
   async function load() {
     loading = true; status = '';
-    try { cards = await listCards(); if (!cards.length) status = 'Deine Sammlung ist noch leer.'; }
-    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte zuerst oben anmelden.' : m; }
+    try { cards = await listCards(); if (!cards.length) status = i18n.t('coll.empty'); }
+    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLogin') : m; }
     finally { loading = false; }
   }
   onMount(load);
@@ -38,10 +39,10 @@
   const count = $derived(cards.reduce((s, c) => s + (c.quantity ?? 1), 0));
 
   async function refreshPrices() {
-    refreshing = true; priceMsg = 'Preise werden geladen…';
+    refreshing = true; priceMsg = i18n.t('coll.pricesLoading');
     try {
-      const { updated, total: t } = await refreshCollectionPrices((d, tt) => (priceMsg = `Preise… ${d}/${tt}`));
-      await load(); priceMsg = `${updated} von ${t} aktualisiert.`; setTimeout(() => (priceMsg = ''), 3500);
+      const { updated, total: t } = await refreshCollectionPrices((d, tt) => (priceMsg = i18n.t('coll.pricesProgress', { d, t: tt })));
+      await load(); priceMsg = i18n.t('coll.pricesUpdated', { u: updated, t }); setTimeout(() => (priceMsg = ''), 3500);
     } catch (e) { priceMsg = (e as Error).message; } finally { refreshing = false; }
   }
   async function changeQty(c: CollectionCard, delta: number) {
@@ -51,7 +52,7 @@
     catch (e) { status = (e as Error).message; } finally { busy = null; }
   }
   async function remove(c: CollectionCard) {
-    if (!confirm(`„${c.name}" wirklich aus der Sammlung entfernen?`)) return;
+    if (!confirm(i18n.t('coll.confirmRemove', { name: c.name }))) return;
     busy = c.id;
     try { await deleteCard(c.id); cards = cards.filter((x) => x.id !== c.id); }
     catch (e) { status = (e as Error).message; } finally { busy = null; }
@@ -66,27 +67,27 @@
 </script>
 
 <div class="coll-head">
-  <div><h2>Deine Sammlung</h2><div class="muted">{count} Karten · Wert {money(total)}{#if priceMsg}{' · '}{priceMsg}{/if}</div></div>
+  <div><h2>{i18n.t('coll.title')}</h2><div class="muted">{i18n.t('coll.summary', { count, value: money(total) })}{#if priceMsg}{' · '}{priceMsg}{/if}</div></div>
   <div class="head-btns">
-    <button class="primary" onclick={refreshPrices} disabled={refreshing || loading}>{refreshing ? '…' : 'Preise aktualisieren'}</button>
-    <button class="ghost" onclick={load} disabled={loading || refreshing}>{loading ? '…' : 'Neu laden'}</button>
+    <button class="primary" onclick={refreshPrices} disabled={refreshing || loading}>{refreshing ? '…' : i18n.t('coll.refreshPrices')}</button>
+    <button class="ghost" onclick={load} disabled={loading || refreshing}>{loading ? '…' : i18n.t('coll.reload')}</button>
   </div>
 </div>
 {#if status}<div class="hint">{status}</div>{/if}
 {#if cards.length}
   <CardFilter bind:state={filter} {games} sorts={['name', 'price_desc', 'price_asc']} total={cards.length} shown={shownCards.length} />
 {/if}
-{#if cards.length && !shownCards.length}<div class="hint">Keine Karten passen zu Suche/Filter.</div>{/if}
+{#if cards.length && !shownCards.length}<div class="hint">{i18n.t('coll.noFilterMatch')}</div>{/if}
 <div class="grid">
   {#each shownCards as c (c.id)}
     <div class="card" class:busy={busy === c.id}>
       <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
-      {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => openDetail(c)} />{:else}<div class="ph">kein Bild</div>{/if}
+      {#if c.image_url}<img src={c.image_url} alt={c.name} loading="lazy" style="cursor:zoom-in" onclick={() => openDetail(c)} />{:else}<div class="ph">{i18n.t('coll.noImage')}</div>{/if}
       <div class="meta">
         <div class="name">{c.name}</div>
         <div class="set"><Flag lang={c.language} />{c.set_name ?? ''}</div>
         {#if c.rarity}<div class="rarity">{c.rarity}</div>{/if}
-        <div class="price">{c.price_current != null ? fmt(c.price_current, c.currency ?? 'EUR') : 'kein Preis'}</div>
+        <div class="price">{c.price_current != null ? fmt(c.price_current, c.currency ?? 'EUR') : i18n.t('coll.noPrice')}</div>
       </div>
       <div class="card-actions">
         <button onclick={() => changeQty(c, -1)} disabled={busy === c.id || (c.quantity ?? 1) <= 1}>−</button>

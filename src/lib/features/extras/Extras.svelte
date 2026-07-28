@@ -176,7 +176,7 @@
 {#if mode === 'sealed'}
   {#if !sealed.length && !loading}<div class="hint">Noch keine versiegelten Produkte.</div>{/if}
   {#if sealed.length}
-    <CardFilter bind:state={filter} games={sealedGames} sorts={['name', 'price_desc', 'price_asc']} total={byType.length} shown={filteredSealed.length} placeholder="Suchen (Name, Set)…" />
+    <CardFilter bind:state={filter} games={sealedGames} sorts={['name', 'price_desc', 'price_asc']} total={byType.length} shown={filteredSealed.length} />
     <div class="filterbar">
       <label>Typ filtern
         <select bind:value={typeFilter}>
@@ -210,7 +210,7 @@
 {:else}
   {#if !graded.length && !loading}<div class="hint">Noch keine gegradeten Karten.</div>{/if}
   {#if graded.length}
-    <CardFilter bind:state={filter} sorts={['name', 'price_desc', 'price_asc']} total={graded.length} shown={shownGraded.length} placeholder="Suchen (Name, Set, Nummer)…" />
+    <CardFilter bind:state={filter} sorts={['name', 'price_desc', 'price_asc']} total={graded.length} shown={shownGraded.length} />
   {/if}
   {#if graded.length && !shownGraded.length}<div class="hint">Keine Karten passen zu Suche/Filter.</div>{/if}
   <div class="grid">

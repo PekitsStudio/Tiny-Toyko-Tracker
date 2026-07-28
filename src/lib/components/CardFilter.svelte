@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { SORT_LABEL, type FilterState, type SortKey, type GameChip } from '$lib/features/collection/filter';
+  import { type FilterState, type SortKey, type GameChip } from '$lib/features/collection/filter';
+  import { i18n } from '$lib/i18n.svelte';
 
   let {
     state = $bindable(),
@@ -7,7 +8,7 @@
     sorts = ['name', 'price_desc', 'price_asc'] as SortKey[],
     total = 0,
     shown = 0,
-    placeholder = 'Suchen (Name, Set, Nummer)…'
+    placeholder = ''
   }: {
     state: FilterState;
     games?: GameChip[];
@@ -25,20 +26,20 @@
   <div class="row1">
     <div class="search">
       <span class="ico">🔍</span>
-      <input type="search" bind:value={state.q} {placeholder} />
-      {#if state.q}<button class="clr" onclick={() => (state.q = '')} aria-label="Suche leeren">✕</button>{/if}
+      <input type="search" bind:value={state.q} placeholder={placeholder || i18n.t('filter.search')} />
+      {#if state.q}<button class="clr" onclick={() => (state.q = '')} aria-label={i18n.t('filter.clear')}>✕</button>{/if}
     </div>
     <label class="sortsel">
-      <span>Sortieren</span>
+      <span>{i18n.t('filter.sort')}</span>
       <select bind:value={state.sort}>
-        {#each sorts as s (s)}<option value={s}>{SORT_LABEL[s]}</option>{/each}
+        {#each sorts as s (s)}<option value={s}>{i18n.t('sort.' + s)}</option>{/each}
       </select>
     </label>
   </div>
 
   {#if games.length > 1}
     <div class="chips">
-      <button class:on={state.game === ''} onclick={() => (state.game = '')}>Alle ({total})</button>
+      <button class:on={state.game === ''} onclick={() => (state.game = '')}>{i18n.t('filter.all', { n: total })}</button>
       {#each games as g (g.key)}
         <button class:on={state.game === g.key} onclick={() => (state.game = state.game === g.key ? '' : g.key)}>{g.label} ({g.n})</button>
       {/each}
@@ -46,7 +47,7 @@
   {/if}
 
   {#if active}
-    <div class="statusline">{shown} von {total} · <button class="reset" onclick={reset}>Filter zurücksetzen</button></div>
+    <div class="statusline">{i18n.t('filter.shownOf', { s: shown, t: total })} · <button class="reset" onclick={reset}>{i18n.t('filter.reset')}</button></div>
   {/if}
 </div>
 

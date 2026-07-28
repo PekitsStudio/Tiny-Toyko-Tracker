@@ -5,6 +5,7 @@
   import { SearchService, type Facets, type PokeHit } from '$lib/services/search.service';
   import { getRecent, recordRecent } from '$lib/recent';
   import { langLabel } from '$lib/format';
+  import { i18n } from '$lib/i18n.svelte';
   import { addCard, addWishlist } from '$lib/services/collection.service';
   import { detail } from '$lib/stores/detail.svelte';
   import type { Game, SearchCard, SearchFilters, SearchMode } from '$lib/types';
@@ -73,7 +74,7 @@
     if (!q) return;
     recent = recordRecent(q);
     const token = ++searchToken;
-    status = 'Suche läuft…';
+    status = i18n.t('search.running');
     results = []; showFilters = false;
     try {
       const res = await service.search({ game, q, lang, mode });
@@ -81,12 +82,12 @@
       res.forEach((c) => { if (!c.lang) c.lang = lang; });
       results = res;
       status = '';
-      if (!res.length) { status = 'Keine Treffer.'; return; }
+      if (!res.length) { status = i18n.t('search.noHits'); return; }
       facets = service.facets(res);
       showFilters = true;
       enrichPending(token);
     } catch (e) {
-      if (token === searchToken) status = 'Fehler bei der Suche: ' + (e as Error).message;
+      if (token === searchToken) status = i18n.t('search.error', { m: (e as Error).message });
     }
   }
 
@@ -111,7 +112,7 @@
         done += slice.length;
         results = [...results];
         facets = service.facets(results);
-        status = done < total ? `Preise werden geladen… ${done}/${total}` : '';
+        status = done < total ? i18n.t('search.pricesLoading', { d: done, t: total }) : '';
       }
     }
   }
@@ -121,8 +122,8 @@
   let flashErr = $state(false);
   async function act(kind: 'add' | 'quick' | 'wish', c: SearchCard) {
     try {
-      if (kind === 'wish') { await addWishlist(c); flash = `„${c.name}" auf die Wunschliste gesetzt.`; }
-      else { await addCard(c); flash = `„${c.name}" zur Sammlung hinzugefügt.`; }
+      if (kind === 'wish') { await addWishlist(c); flash = i18n.t('search.addedToWishlist', { name: c.name }); }
+      else { await addCard(c); flash = i18n.t('search.addedToCollection', { name: c.name }); }
       flashErr = false;
     } catch (e) {
       flash = (e as Error).message;
@@ -141,8 +142,8 @@
 </script>
 
 <div class="search-hero">
-  <h1 class="sh-title">Welche Karte suchst du heute?</h1>
-  <p class="sh-sub">Durchsuche Pokémon, Magic, Yu-Gi-Oh, One Piece und Riftbound – nach Name oder Nummer.</p>
+  <h1 class="sh-title">{i18n.t('search.title')}</h1>
+  <p class="sh-sub">{i18n.t('search.subtitle')}</p>
 
   <div class="sh-games">
     {#each GAMES as g (g.id)}
@@ -154,29 +155,29 @@
   <div class="sh-bar">
     <span class="sh-ico" aria-hidden="true">🔍</span>
     <div class="ac-wrap sh-acwrap">
-      <input type="text" id="query" placeholder="Suche nach Karten, Sets oder Nummern…"
-        autocomplete="off" aria-label="Kartensuche"
+      <input type="text" id="query" placeholder={i18n.t('search.placeholder')}
+        autocomplete="off" spellcheck="false" aria-label={i18n.t('nav.search')}
         bind:value={query} oninput={onQueryInput}
         onkeydown={(e) => { if (e.key === 'Enter') { hideAuto(); doSearch(); } }} />
       <Autocomplete open={acOpen} kind={acKind} {pokeHits} {opHits} onpick={pickAuto} />
     </div>
-    {#if query}<button type="button" class="sh-clear" title="Leeren" onclick={clearQuery}>✕</button>{/if}
-    <button class="sh-go" onclick={() => { hideAuto(); doSearch(); }}>Suchen</button>
+    {#if query}<button type="button" class="sh-clear" title={i18n.t('search.clear')} onclick={clearQuery}>✕</button>{/if}
+    <button class="sh-go" onclick={() => { hideAuto(); doSearch(); }}>{i18n.t('search.go')}</button>
   </div>
 
   <div class="sh-secondary">
     <select bind:value={lang} title="Sprache">
-      {#each LANGS as l}<option value={l}>{l ? langLabel(l) : 'Sprache (auto)'}</option>{/each}
+      {#each LANGS as l}<option value={l}>{l ? langLabel(l) : i18n.t('search.langAuto')}</option>{/each}
     </select>
-    <select bind:value={mode} title="Suche nach Name oder Kartennummer">
-      <option value="name">nach Name</option>
-      <option value="number">nach Nummer</option>
+    <select bind:value={mode} title={i18n.t('search.fLang')}>
+      <option value="name">{i18n.t('search.byName')}</option>
+      <option value="number">{i18n.t('search.byNumber')}</option>
     </select>
   </div>
 
   {#if recent.length}
     <div class="sh-suggest">
-      <span class="muted">Zuletzt:</span>
+      <span class="muted">{i18n.t('search.recent')}</span>
       {#each recent as r (r)}
         <button type="button" class="chip" onclick={() => { query = r; doSearch(); }}>{r}</button>
       {/each}
@@ -189,27 +190,27 @@
 
 {#if showFilters}
   <div class="filterbar row">
-    <span><span class="flabel">Set</span>
-      <select bind:value={filters.set}><option value="">alle</option>
+    <span><span class="flabel">{i18n.t('search.fSet')}</span>
+      <select bind:value={filters.set}><option value="">{i18n.t('search.fAll')}</option>
         {#each facets.sets as s (s)}<option>{s}</option>{/each}</select></span>
-    <span><span class="flabel">Seltenheit</span>
-      <select bind:value={filters.rarity}><option value="">alle</option>
+    <span><span class="flabel">{i18n.t('search.fRarity')}</span>
+      <select bind:value={filters.rarity}><option value="">{i18n.t('search.fAll')}</option>
         {#each facets.rarities as r (r)}<option>{r}</option>{/each}</select></span>
     {#if facets.langs.length > 1}
-      <span><span class="flabel">Sprache</span>
-        <select bind:value={filters.lang}><option value="">alle</option>
+      <span><span class="flabel">{i18n.t('search.fLang')}</span>
+        <select bind:value={filters.lang}><option value="">{i18n.t('search.fAll')}</option>
           {#each facets.langs as l}<option value={l}>{langLabel(l)}</option>{/each}</select></span>
     {/if}
-    <span><label style="cursor:pointer"><input type="checkbox" bind:checked={filters.priceOnly} style="width:auto" /><span> nur mit Preis</span></label></span>
-    <span><span class="flabel">Sortieren</span>
+    <span><label style="cursor:pointer"><input type="checkbox" bind:checked={filters.priceOnly} style="width:auto" /><span> {i18n.t('search.fPriceOnly')}</span></label></span>
+    <span><span class="flabel">{i18n.t('filter.sort')}</span>
       <select bind:value={filters.sort}>
-        <option value="relevance">Relevanz</option>
-        <option value="price-desc">Preis ↓</option>
-        <option value="price-asc">Preis ↑</option>
-        <option value="name">Name A–Z</option>
-        <option value="number">Nummer</option>
+        <option value="relevance">{i18n.t('search.fRelevance')}</option>
+        <option value="price-desc">{i18n.t('sort.price_desc')}</option>
+        <option value="price-asc">{i18n.t('sort.price_asc')}</option>
+        <option value="name">{i18n.t('sort.name')}</option>
+        <option value="number">{i18n.t('search.fNumber')}</option>
       </select></span>
-    <span class="hint">{filtered.length} von {results.length}</span>
+    <span class="hint">{i18n.t('filter.shownOf', { s: filtered.length, t: results.length })}</span>
   </div>
 {/if}
 
