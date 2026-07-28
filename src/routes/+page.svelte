@@ -9,15 +9,16 @@
   import PublicProfile from '$lib/components/PublicProfile.svelte';
   import MarketDetail from '$lib/components/MarketDetail.svelte';
   import { nav } from '$lib/stores/nav.svelte';
+  import { i18n } from '$lib/i18n.svelte';
 </script>
 
 <nav class="tabs">
-  <button class:active={nav.tab === 'start'} onclick={() => nav.go('start')}>Start</button>
-  <button class:active={nav.tab === 'suche'} onclick={() => nav.go('suche')}>Suche</button>
-  <button class:active={nav.tab === 'sammlung'} onclick={() => nav.go('sammlung')}>Sammlung</button>
-  <button class:active={nav.tab === 'marktplatz'} onclick={() => nav.go('marktplatz')}>Marktplatz</button>
-  <button class:active={nav.tab === 'community'} onclick={() => nav.go('community')}>Community</button>
-  <button class:active={nav.tab === 'profil'} onclick={() => nav.go('profil')}>Profil</button>
+  <button class:active={nav.tab === 'start'} onclick={() => nav.go('start')}>{i18n.t('nav.start')}</button>
+  <button class:active={nav.tab === 'suche'} onclick={() => nav.go('suche')}>{i18n.t('nav.search')}</button>
+  <button class:active={nav.tab === 'sammlung'} onclick={() => nav.go('sammlung')}>{i18n.t('nav.collection')}</button>
+  <button class:active={nav.tab === 'marktplatz'} onclick={() => nav.go('marktplatz')}>{i18n.t('nav.market')}</button>
+  <button class:active={nav.tab === 'community'} onclick={() => nav.go('community')}>{i18n.t('nav.community')}</button>
+  <button class:active={nav.tab === 'profil'} onclick={() => nav.go('profil')}>{i18n.t('nav.profile')}</button>
 </nav>
 
 <main>

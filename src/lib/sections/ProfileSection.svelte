@@ -7,19 +7,20 @@
   import Progress from '$lib/features/progress/Progress.svelte';
   import AvatarShop from '$lib/features/shop/AvatarShop.svelte';
   import { social } from '$lib/stores/social.svelte';
+  import { i18n } from '$lib/i18n.svelte';
 
   let sub = $state<'profil' | 'fortschritt' | 'shop' | 'nachrichten' | 'freunde' | 'export' | 'einstellungen'>('profil');
   $effect(() => { if (social.chatWith) sub = 'nachrichten'; });
 </script>
 
 <div class="subnav">
-  <button class:active={sub === 'profil'} onclick={() => (sub = 'profil')}>Mein Profil</button>
-  <button class:active={sub === 'fortschritt'} onclick={() => (sub = 'fortschritt')}>Fortschritt</button>
-  <button class:active={sub === 'shop'} onclick={() => (sub = 'shop')}>Avatar-Shop</button>
-  <button class:active={sub === 'nachrichten'} onclick={() => (sub = 'nachrichten')}>Nachrichten</button>
-  <button class:active={sub === 'freunde'} onclick={() => (sub = 'freunde')}>Freunde</button>
-  <button class:active={sub === 'export'} onclick={() => (sub = 'export')}>Import/Export</button>
-  <button class:active={sub === 'einstellungen'} onclick={() => (sub = 'einstellungen')}>Einstellungen</button>
+  <button class:active={sub === 'profil'} onclick={() => (sub = 'profil')}>{i18n.t('psub.profile')}</button>
+  <button class:active={sub === 'fortschritt'} onclick={() => (sub = 'fortschritt')}>{i18n.t('psub.progress')}</button>
+  <button class:active={sub === 'shop'} onclick={() => (sub = 'shop')}>{i18n.t('psub.shop')}</button>
+  <button class:active={sub === 'nachrichten'} onclick={() => (sub = 'nachrichten')}>{i18n.t('psub.messages')}</button>
+  <button class:active={sub === 'freunde'} onclick={() => (sub = 'freunde')}>{i18n.t('psub.friends')}</button>
+  <button class:active={sub === 'export'} onclick={() => (sub = 'export')}>{i18n.t('psub.exportImport')}</button>
+  <button class:active={sub === 'einstellungen'} onclick={() => (sub = 'einstellungen')}>{i18n.t('psub.settings')}</button>
 </div>
 
 {#if sub === 'profil'}<Profile />

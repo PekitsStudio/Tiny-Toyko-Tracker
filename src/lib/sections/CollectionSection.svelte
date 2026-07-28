@@ -6,17 +6,18 @@
   import Showcases from '$lib/features/showcase/Showcases.svelte';
   import Statistik from '$lib/features/stats/Statistik.svelte';
   import Alerts from '$lib/features/alerts/Alerts.svelte';
+  import { i18n } from '$lib/i18n.svelte';
   let sub = $state<'sammlung' | 'wunschliste' | 'extras' | 'verkauft' | 'showcases' | 'statistik' | 'alerts'>('sammlung');
 </script>
 
 <div class="subnav">
-  <button class:active={sub === 'sammlung'} onclick={() => (sub = 'sammlung')}>Meine Sammlung</button>
-  <button class:active={sub === 'wunschliste'} onclick={() => (sub = 'wunschliste')}>Wunschliste</button>
-  <button class:active={sub === 'extras'} onclick={() => (sub = 'extras')}>Sealed/Graded</button>
-  <button class:active={sub === 'verkauft'} onclick={() => (sub = 'verkauft')}>Verkauft</button>
-  <button class:active={sub === 'showcases'} onclick={() => (sub = 'showcases')}>Showcases</button>
-  <button class:active={sub === 'statistik'} onclick={() => (sub = 'statistik')}>Statistik</button>
-  <button class:active={sub === 'alerts'} onclick={() => (sub = 'alerts')}>Preisalarme</button>
+  <button class:active={sub === 'sammlung'} onclick={() => (sub = 'sammlung')}>{i18n.t('csub.mine')}</button>
+  <button class:active={sub === 'wunschliste'} onclick={() => (sub = 'wunschliste')}>{i18n.t('csub.wishlist')}</button>
+  <button class:active={sub === 'extras'} onclick={() => (sub = 'extras')}>{i18n.t('csub.sealed')}</button>
+  <button class:active={sub === 'verkauft'} onclick={() => (sub = 'verkauft')}>{i18n.t('csub.sold')}</button>
+  <button class:active={sub === 'showcases'} onclick={() => (sub = 'showcases')}>{i18n.t('csub.showcases')}</button>
+  <button class:active={sub === 'statistik'} onclick={() => (sub = 'statistik')}>{i18n.t('csub.stats')}</button>
+  <button class:active={sub === 'alerts'} onclick={() => (sub = 'alerts')}>{i18n.t('csub.alerts')}</button>
 </div>
 
 {#if sub === 'sammlung'}<Collection />

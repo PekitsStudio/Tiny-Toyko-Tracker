@@ -11,6 +11,7 @@
   import { nav } from '$lib/stores/nav.svelte';
   import { fmt, money } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
+  import { i18n } from '$lib/i18n.svelte';
 
   let value = $state<Record<string, number>>({}); let cardCount = $state(0); let uniqueCount = $state(0);
   let wishCount = $state(0); let offerCount = $state(0); let unread = $state(0);
@@ -52,7 +53,7 @@
       try { dq = await getQuests(); cp = dq.cp; } catch { dq = null; }
     } catch (e) {
       const m = (e as Error).message;
-      err = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden, um dein Dashboard zu sehen.' : m;
+      err = m === 'Nicht eingeloggt' ? i18n.t('dash.loginPrompt') : m;
     } finally { loading = false; }
   }
   onMount(load);
@@ -70,18 +71,18 @@
   <!-- Hero -->
   <section class="hero">
     <div class="hmain">
-      <div class="eyebrow">Deine Sammlung</div>
+      <div class="eyebrow">{i18n.t('dash.eyebrow')}</div>
       <div class="hval">{money(value)}</div>
       <div class="hsub">
-        {cardCount} Karten · {uniqueCount} verschiedene
+        {i18n.t('dash.cardsLine', { n: cardCount, u: uniqueCount })}
         {#if trend}
           · <span class="delta" class:up={trend.change >= 0} class:down={trend.change < 0}>{trend.change >= 0 ? '▲' : '▼'} {trend.change >= 0 ? '+' : ''}{fmt(trend.change)} ({trend.pct.toFixed(1)}%)</span>
-          <span class="muted">seit {sinceLabel(trend.since)}</span>
+          <span class="muted">{i18n.t('dash.since', { d: sinceLabel(trend.since) })}</span>
         {/if}
       </div>
       <div class="hcta">
-        <button class="primary" onclick={() => nav.go('sammlung')}>Zur Sammlung</button>
-        <button class="ghost" onclick={() => nav.go('suche')}>＋ Karten suchen</button>
+        <button class="primary" onclick={() => nav.go('sammlung')}>{i18n.t('dash.toCollection')}</button>
+        <button class="ghost" onclick={() => nav.go('suche')}>{i18n.t('dash.searchCards')}</button>
       </div>
     </div>
     {#if top[0]?.image_url}
@@ -93,17 +94,17 @@
 
   <!-- KPI-Chips -->
   <div class="kpis">
-    <button class="kpi" onclick={() => nav.go('sammlung')}><span class="ki">💛</span><span class="kt"><b>{wishCount}</b> Wunschliste</span></button>
-    <button class="kpi" onclick={() => nav.go('marktplatz')}><span class="ki">🏷️</span><span class="kt"><b>{offerCount}</b> Angebote</span></button>
-    <button class="kpi" onclick={() => nav.go('profil')}><span class="ki">✉️</span><span class="kt"><b class:accent={unread > 0}>{unread}</b> Nachrichten</span></button>
-    <button class="kpi" onclick={() => nav.go('sammlung')}><span class="ki">🔔</span><span class="kt"><b class:accent={hitAlerts.length > 0}>{hitAlerts.length}/{alerts.length}</b> Alarme</span></button>
+    <button class="kpi" onclick={() => nav.go('sammlung')}><span class="ki">💛</span><span class="kt"><b>{wishCount}</b> {i18n.t('dash.kpiWishlist')}</span></button>
+    <button class="kpi" onclick={() => nav.go('marktplatz')}><span class="ki">🏷️</span><span class="kt"><b>{offerCount}</b> {i18n.t('dash.kpiOffers')}</span></button>
+    <button class="kpi" onclick={() => nav.go('profil')}><span class="ki">✉️</span><span class="kt"><b class:accent={unread > 0}>{unread}</b> {i18n.t('dash.kpiMessages')}</span></button>
+    <button class="kpi" onclick={() => nav.go('sammlung')}><span class="ki">🔔</span><span class="kt"><b class:accent={hitAlerts.length > 0}>{hitAlerts.length}/{alerts.length}</b> {i18n.t('dash.kpiAlerts')}</span></button>
   </div>
 
   {#if !loading && cardCount === 0}
     <div class="empty">
       <div class="emoji">🃏</div>
-      <div><b>Deine Sammlung ist noch leer.</b><div class="muted">Such deine erste Karte und füge sie mit einem Klick hinzu.</div></div>
-      <button class="primary" onclick={() => nav.go('suche')}>Karten suchen</button>
+      <div><b>{i18n.t('dash.emptyTitle')}</b><div class="muted">{i18n.t('dash.emptyBody')}</div></div>
+      <button class="primary" onclick={() => nav.go('suche')}>{i18n.t('dash.emptyCta')}</button>
     </div>
   {/if}
 
@@ -124,7 +125,7 @@
   <div class="widgets">
     {#if lvl}
       <section class="w wide prog">
-        <div class="wh"><h2>🎯 Fortschritt</h2><button class="link" onclick={() => nav.go('profil')}>Details →</button></div>
+        <div class="wh"><h2>{i18n.t('dash.progress')}</h2><button class="link" onclick={() => nav.go('profil')}>{i18n.t('dash.details')}</button></div>
         <div class="plvl">
           <span class="plv">Lv {lvl.level}</span>
           <div class="pbarwrap">
@@ -134,29 +135,29 @@
         </div>
         {#if dq}
           <div class="pcols">
-            <div><div class="pcolh">☀️ Heute</div>{#each dq.daily as q (q.id)}{@render miniQuest(q)}{/each}</div>
-            <div><div class="pcolh">🗓️ Diese Woche</div>{#each dq.weekly as q (q.id)}{@render miniQuest(q)}{/each}</div>
+            <div><div class="pcolh">{i18n.t('dash.today')}</div>{#each dq.daily as q (q.id)}{@render miniQuest(q)}{/each}</div>
+            <div><div class="pcolh">{i18n.t('dash.thisWeek')}</div>{#each dq.weekly as q (q.id)}{@render miniQuest(q)}{/each}</div>
           </div>
         {/if}
       </section>
     {/if}
     {#if gainers.length || losers.length}
       <section class="w">
-        <div class="wh"><h2>Preisbewegungen</h2><span class="muted small">seit Hinzufügen</span></div>
+        <div class="wh"><h2>{i18n.t('dash.priceMoves')}</h2><span class="muted small">{i18n.t('dash.sinceAdd')}</span></div>
         <div class="mcols">
           <div>
-            <div class="ml up">▲ Gewinner</div>
+            <div class="ml up">{i18n.t('dash.gainers')}</div>
             {#each gainers as m (m.id)}
               <div class="mrow">{#if m.image_url}<img src={m.image_url} alt="" loading="lazy" />{:else}<span class="mph"></span>{/if}<span class="mn" title={m.name}>{m.name}</span><span class="mc up">+{fmt(m.change, m.currency ?? 'EUR')}<small>{m.pct.toFixed(0)}%</small></span></div>
             {/each}
-            {#if !gainers.length}<div class="muted small">keine</div>{/if}
+            {#if !gainers.length}<div class="muted small">{i18n.t('dash.none')}</div>{/if}
           </div>
           <div>
-            <div class="ml down">▼ Verlierer</div>
+            <div class="ml down">{i18n.t('dash.losers')}</div>
             {#each losers as m (m.id)}
               <div class="mrow">{#if m.image_url}<img src={m.image_url} alt="" loading="lazy" />{:else}<span class="mph"></span>{/if}<span class="mn" title={m.name}>{m.name}</span><span class="mc down">{fmt(m.change, m.currency ?? 'EUR')}<small>{m.pct.toFixed(0)}%</small></span></div>
             {/each}
-            {#if !losers.length}<div class="muted small">keine</div>{/if}
+            {#if !losers.length}<div class="muted small">{i18n.t('dash.none')}</div>{/if}
           </div>
         </div>
       </section>
@@ -164,7 +165,7 @@
 
     {#if hitAlerts.length}
       <section class="w">
-        <div class="wh"><h2>🔔 Ausgelöste Alarme</h2><button class="link" onclick={() => nav.go('sammlung')}>alle →</button></div>
+        <div class="wh"><h2>{i18n.t('dash.triggeredAlerts')}</h2><button class="link" onclick={() => nav.go('sammlung')}>{i18n.t('dash.all')}</button></div>
         {#each hitAlerts.slice(0, 6) as a (a.id)}
           <div class="frow"><span class="fico">🔔</span><span class="ft"><b>{a.name}</b><span class="muted"> · {a.direction === 'below' ? '≤' : '≥'} {fmt(a.target_price, a.currency ?? 'EUR')}{#if a.last_price != null}{' · '}jetzt {fmt(a.last_price, a.currency ?? 'EUR')}{/if}</span></span></div>
         {/each}
@@ -173,7 +174,7 @@
 
     {#if top.length}
       <section class="w">
-        <div class="wh"><h2>🏆 Wertvollste Karten</h2><button class="link" onclick={() => nav.go('sammlung')}>Sammlung →</button></div>
+        <div class="wh"><h2>{i18n.t('dash.topCards')}</h2><button class="link" onclick={() => nav.go('sammlung')}>{i18n.t('dash.collectionLink')}</button></div>
         <div class="tgrid">
           {#each top as c (c.id)}
             <button class="tc" onclick={() => openDetail(c)} title={c.name}>
@@ -187,7 +188,7 @@
 
     {#if activity.length}
       <section class="w">
-        <div class="wh"><h2>👥 Freunde</h2><button class="link" onclick={() => nav.go('community')}>Community →</button></div>
+        <div class="wh"><h2>{i18n.t('dash.friends')}</h2><button class="link" onclick={() => nav.go('community')}>{i18n.t('dash.communityLink')}</button></div>
         {#each activity.slice(0, 6) as a}
           <div class="frow"><span class="fico">{a.type === 'showcase' ? '⛩' : '📝'}</span><span class="ft"><b>{a.who}</b><span class="muted"> · {a.text}</span></span></div>
         {/each}
@@ -196,13 +197,13 @@
 
     {#if highlights.length}
       <section class="w wide">
-        <div class="wh"><h2>✨ Community-Highlights</h2><button class="link" onclick={() => nav.go('community')}>alle →</button></div>
+        <div class="wh"><h2>{i18n.t('dash.highlights')}</h2><button class="link" onclick={() => nav.go('community')}>{i18n.t('dash.all')}</button></div>
         <div class="hgrid">
           {#each highlights as sh (sh.id)}
             <button class="hcard" onclick={() => nav.go('community')}>
               {#if sh.cover}<img src={sh.cover} alt="" loading="lazy" />{:else}<div class="noimg">⛩</div>{/if}
               <div class="hn" title={sh.name}>{sh.name}</div>
-              <div class="hm">von {sh.author_name ?? 'Sammler'} · ♥ {sh.like_count ?? 0}</div>
+              <div class="hm">{i18n.t('dash.by', { name: sh.author_name ?? 'Sammler' })} · ♥ {sh.like_count ?? 0}</div>
             </button>
           {/each}
         </div>
