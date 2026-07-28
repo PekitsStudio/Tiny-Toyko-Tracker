@@ -7,6 +7,7 @@
   import { detail } from '$lib/stores/detail.svelte';
   import CardFilter from '$lib/components/CardFilter.svelte';
   import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
+  import { i18n } from '$lib/i18n.svelte';
 
   type SoldEntry = {
     key: string; kind: 'card' | 'sealed'; id: number; game: string; name: string;
@@ -37,9 +38,9 @@
         purchase_price: s.purchase_price, sold_price: s.sold_price, sold_date: s.sold_date
       }));
       items = [...a, ...b].sort((x, y) => String(y.sold_date ?? '').localeCompare(String(x.sold_date ?? '')));
-      if (!items.length) status = 'Noch keine verkauften Karten oder Produkte.';
+      if (!items.length) status = i18n.t('sold.empty');
     }
-    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
+    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLoginShort') : m; }
     finally { loading = false; }
   }
   onMount(load);
@@ -50,7 +51,7 @@
   const realized = $derived(items.reduce((s, c) => s + ((c.sold_price ?? 0) - (c.purchase_price ?? 0)) * (c.quantity ?? 1), 0));
 
   async function undo(c: SoldEntry) {
-    if (!confirm(`„${c.name}" zurück in die Sammlung?`)) return;
+    if (!confirm(i18n.t('sold.confirmUndo', { name: c.name }))) return;
     busy = c.key;
     try {
       if (c.kind === 'card') await unsellCard(c.id); else await unsellSealed(c.id);
@@ -61,19 +62,19 @@
 </script>
 
 <div class="coll-head">
-  <div><h2>Verkauft</h2><div class="muted">{items.length} verkauft · Erlös {fmt(proceeds)} · Gewinn/Verlust {fmt(realized)}</div></div>
-  <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : 'Aktualisieren'}</button>
+  <div><h2>{i18n.t('sold.title')}</h2><div class="muted">{i18n.t('sold.summary', { n: items.length, proceeds: fmt(proceeds), pl: fmt(realized) })}</div></div>
+  <button class="ghost" onclick={load} disabled={loading}>{loading ? '…' : i18n.t('common.refresh')}</button>
 </div>
 {#if status}<div class="hint">{status}</div>{/if}
 {#if items.length}
   <CardFilter bind:state={filter} {games} sorts={['newest', 'oldest', 'price_desc', 'price_asc', 'name']} total={items.length} shown={shown.length} />
 {/if}
-{#if items.length && !shown.length}<div class="hint">Keine Einträge passen zu Suche/Filter.</div>{/if}
+{#if items.length && !shown.length}<div class="hint">{i18n.t('coll.noFilterMatch')}</div>{/if}
 <div class="grid">
   {#each shown as c (c.key)}
     <div class="card" class:busy={busy === c.key}>
       <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
-      {#if c.image_url}<img src={c.image_url} alt="" loading="lazy" />{:else}<div class="ph">{c.kind === 'sealed' ? '📦' : 'kein Bild'}</div>{/if}
+      {#if c.image_url}<img src={c.image_url} alt={c.name} loading="lazy" />{:else}<div class="ph">{c.kind === 'sealed' ? '📦' : i18n.t('coll.noImage')}</div>{/if}
       <div class="meta">
         <div class="name">{c.name}</div>
         <div class="set"><Flag lang={c.language} />{c.sub ?? c.set_name ?? ''}</div>
@@ -83,9 +84,9 @@
             {(c.sold_price - c.purchase_price) >= 0 ? '+' : ''}{fmt((c.sold_price - c.purchase_price) * (c.quantity ?? 1), c.currency ?? 'EUR')}
           </div>
         {/if}
-        {#if c.sold_date}<div class="date">verkauft {c.sold_date}</div>{/if}
+        {#if c.sold_date}<div class="date">{i18n.t('sold.on', { date: c.sold_date })}</div>{/if}
       </div>
-      <div class="card-actions"><button class="undo" onclick={() => undo(c)} disabled={busy === c.key}>Zurück in Sammlung</button></div>
+      <div class="card-actions"><button class="undo" onclick={() => undo(c)} disabled={busy === c.key}>{i18n.t('sold.back')}</button></div>
     </div>
   {/each}
 </div>

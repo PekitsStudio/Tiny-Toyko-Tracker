@@ -3,6 +3,7 @@
   import { getMyProfile, updateMyProfile } from '$lib/services/profile.service';
   import { getLevel } from '$lib/services/gamification.service';
   import { auth } from '$lib/stores/auth.svelte';
+  import { i18n } from '$lib/i18n.svelte';
 
   let displayName = $state('');
   let avatar = $state(''); // wird im Avatar-Shop gesetzt; hier nur angezeigt
@@ -26,7 +27,7 @@
       try { lvl = await getLevel(); } catch { lvl = null; }
     } catch (e) {
       const m = (e as Error).message;
-      msg = m === 'Nicht eingeloggt' ? 'Bitte zuerst oben anmelden.' : m;
+      msg = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLogin') : m;
     } finally { loading = false; }
   }
   onMount(load);
@@ -38,7 +39,7 @@
         country: f.country || null, contact: f.contact || null, bio: f.bio || null,
         fav_games: f.fav_games || null, collector_type: f.collector_type || null
       });
-      msg = 'Gespeichert ✓';
+      msg = i18n.t('prof.saved');
       setTimeout(() => (msg = ''), 3000);
     } catch (e) { msg = (e as Error).message; }
     finally { saving = false; }
@@ -49,43 +50,43 @@
   <div class="banner"></div>
   <div class="idrow">
     {#if avatar}
-      <img class="av" src={avatar} alt="Profilbild" />
+      <img class="av" src={avatar} alt={i18n.t('prof.avatarAlt')} />
     {:else}
       <div class="av avph">{initial}</div>
     {/if}
     <div class="who">
-      <h2>{displayName || auth.user?.email || 'Sammler'}</h2>
-      {#if lvl}<div class="lvline">Level {lvl.level}{#if f.collector_type}{' · '}{f.collector_type}{/if}</div>{/if}
+      <h2>{displayName || auth.user?.email || i18n.t('prof.collector')}</h2>
+      {#if lvl}<div class="lvline">{i18n.t('prof.level', { n: lvl.level })}{#if f.collector_type}{' · '}{f.collector_type}{/if}</div>{/if}
     </div>
   </div>
   {#if lvl}
     <div class="xp">
-      <div class="xptop"><span>Level {lvl.level}</span><span>{lvl.into} / {lvl.need} XP</span></div>
+      <div class="xptop"><span>{i18n.t('prof.level', { n: lvl.level })}</span><span>{lvl.into} / {lvl.need} XP</span></div>
       <div class="bar"><div class="fill" style="width:{pct}%"></div></div>
     </div>
   {/if}
 </div>
 
-{#if loading}<div class="hint">Lädt…</div>{/if}
+{#if loading}<div class="hint">{i18n.t('common.loading')}</div>{/if}
 
 <div class="form">
   <div class="avatarnote">
-    <span>🎨 Dein Avatar wählst du im Reiter <strong>Avatar-Shop</strong> aus.</span>
-    <small>Ohne ausgewählten Avatar zeigt dein Profil den Anfangsbuchstaben deines Namens.</small>
+    <span>{i18n.t('prof.avatarNotePre')} <strong>{i18n.t('psub.shop')}</strong> {i18n.t('prof.avatarNotePost')}</span>
+    <small>{i18n.t('prof.avatarNoteSmall')}</small>
   </div>
-  <label>Anzeigename
+  <label>{i18n.t('prof.displayName')}
     <input value={displayName || auth.user?.email || ''} disabled />
-    <small>Der Anzeigename ist fest und kann nicht geändert werden.</small>
+    <small>{i18n.t('prof.displayNameHint')}</small>
   </label>
-  <label>Land<input bind:value={f.country} placeholder="z. B. DE" /></label>
-  <label>Kontakt <span class="hint-inline">(für Käufer/Verkäufer im Marktplatz sichtbar)</span>
-    <input bind:value={f.contact} placeholder="E-Mail, Discord, …" />
+  <label>{i18n.t('prof.country')}<input bind:value={f.country} placeholder={i18n.t('prof.countryPh')} /></label>
+  <label>{i18n.t('prof.contact')} <span class="hint-inline">{i18n.t('prof.contactHint')}</span>
+    <input bind:value={f.contact} placeholder={i18n.t('prof.contactPh')} />
   </label>
-  <label>Über mich<textarea rows="3" bind:value={f.bio}></textarea></label>
-  <label>Lieblingsspiele<input bind:value={f.fav_games} placeholder="z. B. Pokémon, One Piece" /></label>
-  <label>Sammlertyp<input bind:value={f.collector_type} placeholder="z. B. Investor, Spieler" /></label>
+  <label>{i18n.t('prof.bio')}<textarea rows="3" bind:value={f.bio}></textarea></label>
+  <label>{i18n.t('prof.favGames')}<input bind:value={f.fav_games} placeholder={i18n.t('prof.favGamesPh')} /></label>
+  <label>{i18n.t('prof.collectorType')}<input bind:value={f.collector_type} placeholder={i18n.t('prof.collectorTypePh')} /></label>
   <div class="saverow">
-    <button class="save" onclick={save} disabled={saving || loading}>{saving ? '…' : 'Speichern'}</button>
+    <button class="save" onclick={save} disabled={saving || loading}>{saving ? '…' : i18n.t('prof.save')}</button>
     {#if msg}<span class="msg">{msg}</span>{/if}
   </div>
 </div>

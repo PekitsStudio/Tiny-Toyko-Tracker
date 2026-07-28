@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { listAlerts, deleteAlert, checkAlerts, type PriceAlert } from '$lib/services/alerts.service';
   import { fmt, GAME_LABEL } from '$lib/format';
+  import { i18n } from '$lib/i18n.svelte';
 
   let alerts = $state<PriceAlert[]>([]);
   let status = $state(''); let loading = $state(false); let busy = $state<number | null>(null);
@@ -9,15 +10,15 @@
 
   async function load() {
     loading = true; status = '';
-    try { alerts = await listAlerts(); if (!alerts.length) status = 'Noch keine Preisalarme. Setze einen über eine Karte (Detailansicht).'; }
-    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
+    try { alerts = await listAlerts(); if (!alerts.length) status = i18n.t('alerts.empty'); }
+    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLoginShort') : m; }
     finally { loading = false; }
   }
   onMount(load);
 
   async function check() {
-    checking = true; checkMsg = 'Preise werden geprüft…';
-    try { const r = await checkAlerts((d, t) => (checkMsg = `Prüfe… ${d}/${t}`)); await load(); checkMsg = `${r.triggered} von ${r.checked} ausgelöst.`; setTimeout(() => (checkMsg = ''), 4000); }
+    checking = true; checkMsg = i18n.t('alerts.checking');
+    try { const r = await checkAlerts((d, t) => (checkMsg = i18n.t('alerts.checkProgress', { d, t }))); await load(); checkMsg = i18n.t('alerts.checkResult', { tr: r.triggered, c: r.checked }); setTimeout(() => (checkMsg = ''), 4000); }
     catch (e) { checkMsg = (e as Error).message; } finally { checking = false; }
   }
   async function del(a: PriceAlert) {
@@ -27,8 +28,8 @@
 </script>
 
 <div class="head">
-  <div><h2>Preisalarme</h2><div class="muted">{alerts.length} Alarme{#if checkMsg}{' · '}{checkMsg}{/if}</div></div>
-  <button class="primary" onclick={check} disabled={checking || loading || !alerts.length}>{checking ? '…' : 'Preise prüfen'}</button>
+  <div><h2>{i18n.t('alerts.title')}</h2><div class="muted">{i18n.t('alerts.count', { n: alerts.length })}{#if checkMsg}{' · '}{checkMsg}{/if}</div></div>
+  <button class="primary" onclick={check} disabled={checking || loading || !alerts.length}>{checking ? '…' : i18n.t('alerts.check')}</button>
 </div>
 
 {#if status}<div class="hint">{status}</div>{/if}
@@ -40,11 +41,11 @@
       <div class="info">
         <div class="n">{a.name} <span class="g">{GAME_LABEL[a.game] ?? a.game}</span></div>
         <div class="cond">{a.direction === 'below' ? '≤' : '≥'} {fmt(a.target_price, a.currency ?? 'EUR')}
-          {#if a.last_price != null}{' · '}zuletzt {fmt(a.last_price, a.currency ?? 'EUR')}{/if}
-          {#if a.triggered}<span class="badge">ausgelöst 🔔</span>{/if}
+          {#if a.last_price != null}{' · '}{i18n.t('alerts.last', { p: fmt(a.last_price, a.currency ?? 'EUR') })}{/if}
+          {#if a.triggered}<span class="badge">{i18n.t('alerts.triggered')}</span>{/if}
         </div>
       </div>
-      <button class="del" onclick={() => del(a)} disabled={busy === a.id} title="Löschen">✕</button>
+      <button class="del" onclick={() => del(a)} disabled={busy === a.id} title={i18n.t('alerts.delete')}>✕</button>
     </div>
   {/each}
 </div>

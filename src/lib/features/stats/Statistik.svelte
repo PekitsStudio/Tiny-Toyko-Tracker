@@ -3,6 +3,7 @@
   import { computeStats, recordSnapshot, getValueHistory, mergeMoney, magnitude, type Stats, type Bucket, type Money, type HistPoint } from '$lib/services/stats.service';
   import { fmt, money, langLabel, GAME_LABEL } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
+  import { i18n } from '$lib/i18n.svelte';
 
   function moneySigned(m: Money): string {
     const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
@@ -21,7 +22,7 @@
       // Verlauf speichert nur den EUR-Anteil (keine Wechselkurse -> keine Mischsumme).
       try { await recordSnapshot(s.value['EUR'] ?? 0); } catch { /* Snapshot optional */ }
       try { history = await getValueHistory(); } catch { history = []; }
-    } catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
+    } catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLoginShort') : m; }
     finally { loading = false; }
   }
   onMount(load);
@@ -47,26 +48,26 @@
   });
 </script>
 
-<h2>Statistik &amp; Auswertung</h2>
+<h2>{i18n.t('stats.title')}</h2>
 {#if status}<div class="hint">{status}</div>{/if}
-{#if loading && !s}<div class="hint">Lädt…</div>{/if}
+{#if loading && !s}<div class="hint">{i18n.t('common.loading')}</div>{/if}
 
 {#if s}
   <div class="cards">
-    <div class="stat big"><div class="l">Sammlungswert (Karten)</div><div class="v gold">{money(s.value)}</div><div class="sub">{s.cardCount} Karten · {s.uniqueCount} verschiedene</div></div>
-    <div class="stat"><div class="l">Investiert</div><div class="v">{money(s.invested)}</div></div>
-    <div class="stat"><div class="l">Unrealisiert</div><div class="v" class:pos={allNonNeg(s.unrealized)} class:neg={!allNonNeg(s.unrealized)}>{moneySigned(s.unrealized)}</div></div>
-    <div class="stat"><div class="l">Realisiert (verkauft)</div><div class="v" class:pos={allNonNeg(s.realized)} class:neg={!allNonNeg(s.realized)}>{moneySigned(s.realized)}</div></div>
-    <div class="stat"><div class="l">Verkaufserlös gesamt</div><div class="v">{money(s.soldProceeds)}</div></div>
-    <div class="stat"><div class="l">Sealed-Wert</div><div class="v">{money(s.sealedValue)}</div></div>
-    <div class="stat"><div class="l">Graded-Wert</div><div class="v">{fmt(s.gradedValue, 'USD')}</div></div>
-    <div class="stat big"><div class="l">Gesamt (Karten + Sealed)</div><div class="v gold">{money(cardsPlusSealed)}</div></div>
+    <div class="stat big"><div class="l">{i18n.t('stats.valueCards')}</div><div class="v gold">{money(s.value)}</div><div class="sub">{i18n.t('stats.cardsLine', { n: s.cardCount, u: s.uniqueCount })}</div></div>
+    <div class="stat"><div class="l">{i18n.t('stats.invested')}</div><div class="v">{money(s.invested)}</div></div>
+    <div class="stat"><div class="l">{i18n.t('stats.unrealized')}</div><div class="v" class:pos={allNonNeg(s.unrealized)} class:neg={!allNonNeg(s.unrealized)}>{moneySigned(s.unrealized)}</div></div>
+    <div class="stat"><div class="l">{i18n.t('stats.realized')}</div><div class="v" class:pos={allNonNeg(s.realized)} class:neg={!allNonNeg(s.realized)}>{moneySigned(s.realized)}</div></div>
+    <div class="stat"><div class="l">{i18n.t('stats.proceeds')}</div><div class="v">{money(s.soldProceeds)}</div></div>
+    <div class="stat"><div class="l">{i18n.t('stats.sealedValue')}</div><div class="v">{money(s.sealedValue)}</div></div>
+    <div class="stat"><div class="l">{i18n.t('stats.gradedValue')}</div><div class="v">{fmt(s.gradedValue, 'USD')}</div></div>
+    <div class="stat big"><div class="l">{i18n.t('stats.total')}</div><div class="v gold">{money(cardsPlusSealed)}</div></div>
   </div>
 
   {#if chart}
     <div class="chartbox">
       <div class="charthead">
-        <h3>📈 Wertverlauf (Karten, EUR)</h3>
+        <h3>{i18n.t('stats.chartTitle')}</h3>
         <span class="muted">{shortDay(chart.last.day)} · {fmt(chart.last.total)}</span>
       </div>
       <svg viewBox="0 0 {CW} {CH}" class="chart" preserveAspectRatio="none" role="img" aria-label="Wertverlauf">
@@ -78,15 +79,15 @@
       </svg>
       <div class="chartfoot">
         <span class="muted">{shortDay(chart.first.day)}</span>
-        <span class="muted">Min {fmt(chart.min)} · Max {fmt(chart.max)}</span>
+        <span class="muted">{i18n.t('stats.minMax', { min: fmt(chart.min), max: fmt(chart.max) })}</span>
         <span class="muted">{shortDay(chart.last.day)}</span>
       </div>
-      {#if history.length < 2}<div class="chartnote">Der Verlauf füllt sich mit der Zeit – bei jedem Öffnen wird der heutige Wert gespeichert.</div>{/if}
+      {#if history.length < 2}<div class="chartnote">{i18n.t('stats.chartNote')}</div>{/if}
     </div>
   {/if}
 
   {#if s.topCards.length}
-    <h3 class="sech">🏆 Wertvollste Karten</h3>
+    <h3 class="sech">{i18n.t('stats.topCards')}</h3>
     <div class="topgrid">
       {#each s.topCards as t, i (t.id)}
         <button class="tcard" onclick={() => detail.open({ game: t.game, name: t.name, imageUrl: t.image_url, price: t.value / (t.quantity || 1), currency: t.currency })}>
@@ -110,15 +111,15 @@
   {/snippet}
 
   <div class="anrows">
-    <div class="ancard"><h3>🎮 Nach Spiel</h3>
+    <div class="ancard"><h3>{i18n.t('stats.byGame')}</h3>
       {#each s.byGame as g (g.key)}
         <div class="bar-row"><span class="bl">{GAME_LABEL[g.key] ?? g.key}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (magnitude(g.value) / maxVal(s.byGame)) * 100).toFixed(0)}%"></span></span><span class="bv">{money(g.value)}</span></div>
       {/each}
     </div>
-    {#if s.byRarity.length}<div class="ancard"><h3>✨ Nach Seltenheit</h3>{@render bars(s.byRarity)}</div>{/if}
-    {#if s.bySet.length}<div class="ancard"><h3>📚 Nach Set</h3>{@render bars(s.bySet)}</div>{/if}
-    {#if s.byCondition.length}<div class="ancard"><h3>🛡️ Nach Zustand</h3>{@render bars(s.byCondition)}</div>{/if}
-    {#if s.byLanguage.length}<div class="ancard"><h3>🌐 Nach Sprache</h3>
+    {#if s.byRarity.length}<div class="ancard"><h3>{i18n.t('stats.byRarity')}</h3>{@render bars(s.byRarity)}</div>{/if}
+    {#if s.bySet.length}<div class="ancard"><h3>{i18n.t('stats.bySet')}</h3>{@render bars(s.bySet)}</div>{/if}
+    {#if s.byCondition.length}<div class="ancard"><h3>{i18n.t('stats.byCondition')}</h3>{@render bars(s.byCondition)}</div>{/if}
+    {#if s.byLanguage.length}<div class="ancard"><h3>{i18n.t('stats.byLanguage')}</h3>
       {#each s.byLanguage as b (b.key)}
         <div class="bar-row"><span class="bl">{langLabel(b.key)}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (magnitude(b.value) / maxVal(s.byLanguage)) * 100).toFixed(0)}%"></span></span><span class="bv">{money(b.value)}</span></div>
       {/each}

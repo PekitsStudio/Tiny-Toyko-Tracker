@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getShop, buyAvatar, equipAvatar, RARITY_META, type ShopData, type ShopAvatar } from '$lib/services/avatars.service';
+  import { i18n } from '$lib/i18n.svelte';
+  const nfmt = (n: number) => n.toLocaleString(i18n.locale === 'en' ? 'en-US' : 'de-DE');
 
   let data = $state<ShopData | null>(null);
   let loading = $state(true);
@@ -22,7 +24,7 @@
     try { data = await getShop(); }
     catch (e) {
       const m = (e as Error).message;
-      msg = m === 'Nicht eingeloggt' ? 'Bitte zuerst oben anmelden.' : m;
+      msg = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLogin') : m;
     } finally { loading = false; }
   }
   onMount(load);
@@ -36,7 +38,7 @@
       const cp = await buyAvatar(a.path, a.price);
       data.cp = cp;
       a.owned = true;
-      msg = `„${a.name}" freigeschaltet ✓`;
+      msg = i18n.t('shop.unlocked', { name: a.name });
       setTimeout(() => (msg = ''), 3000);
     } catch (e) { msg = (e as Error).message; }
     finally { busy = null; }
@@ -50,7 +52,7 @@
       // alle deaktivieren, gewaehlten aktivieren
       for (const c of data.collections) for (const s of c.sets) for (const av of s.avatars) av.active = av.path === a.path;
       data.avatarUrl = a.url;
-      msg = `„${a.name}" als Profilbild gesetzt ✓`;
+      msg = i18n.t('shop.setAsAvatar', { name: a.name });
       setTimeout(() => (msg = ''), 3000);
     } catch (e) { msg = (e as Error).message; }
     finally { busy = null; }
@@ -60,18 +62,18 @@
 <div class="shop">
   <div class="head">
     <div>
-      <h2>Avatar-Shop</h2>
-      <p class="sub">Schalte Avatare mit Collector Points frei und setze sie als Profilbild.</p>
+      <h2>{i18n.t('shop.title')}</h2>
+      <p class="sub">{i18n.t('shop.sub')}</p>
     </div>
-    {#if data}<div class="cp">🪙 {data.cp.toLocaleString('de-DE')} <span>CP</span></div>{/if}
+    {#if data}<div class="cp">🪙 {nfmt(data.cp)} <span>CP</span></div>{/if}
   </div>
 
   {#if msg}<div class="msg">{msg}</div>{/if}
 
   {#if !loading && data && data.collections.length > 0}
     <div class="filters">
-      <button class:on={setFilter === 'all'} onclick={() => (setFilter = 'all')}>Alle</button>
-      <button class:on={setFilter === 'owned'} onclick={() => (setFilter = 'owned')}>Meine</button>
+      <button class:on={setFilter === 'all'} onclick={() => (setFilter = 'all')}>{i18n.t('shop.filterAll')}</button>
+      <button class:on={setFilter === 'owned'} onclick={() => (setFilter = 'owned')}>{i18n.t('shop.filterMine')}</button>
       {#each allSets as s (s.id)}
         <button class:on={setFilter === s.id} onclick={() => (setFilter = s.id)}>{s.label}</button>
       {/each}
@@ -79,9 +81,9 @@
   {/if}
 
   {#if loading}
-    <div class="hint">Lädt…</div>
+    <div class="hint">{i18n.t('common.loading')}</div>
   {:else if !data || data.collections.length === 0}
-    <div class="hint">Noch keine Avatare verfügbar.</div>
+    <div class="hint">{i18n.t('shop.noAvatars')}</div>
   {:else}
     {#each data.collections as col (col.key)}
       {#if data.collections.length > 1 && setFilter !== 'owned' && col.sets.some((s) => showSet(col.key, s.key))}<h3 class="coll">{col.label}</h3>{/if}
@@ -94,19 +96,19 @@
               <div class="card rar-{a.rarity}" class:active={a.active}>
                 <div class="imgwrap">
                   <img src={a.url} alt={a.name} loading="lazy" />
-                  {#if a.active}<span class="badge-active">Aktiv</span>{/if}
+                  {#if a.active}<span class="badge-active">{i18n.t('shop.activeBadge')}</span>{/if}
                 </div>
                 <div class="name">{a.name}</div>
                 <div class="rar">{rarLabel(a.rarity)}</div>
                 {#if a.active}
-                  <button class="btn on" disabled>✓ Ausgerüstet</button>
+                  <button class="btn on" disabled>{i18n.t('shop.equipped')}</button>
                 {:else if a.owned}
                   <button class="btn equip" onclick={() => equip(a)} disabled={busy === a.path}>
-                    {busy === a.path ? '…' : 'Auswählen'}
+                    {busy === a.path ? '…' : i18n.t('shop.select')}
                   </button>
                 {:else}
                   <button class="btn buy" onclick={() => buy(a)} disabled={busy === a.path || (data?.cp ?? 0) < a.price}>
-                    {busy === a.path ? '…' : `🪙 ${a.price.toLocaleString('de-DE')}`}
+                    {busy === a.path ? '…' : `🪙 ${nfmt(a.price)}`}
                   </button>
                 {/if}
               </div>
@@ -118,7 +120,7 @@
     {/each}
 
     {#if setFilter === 'owned' && data.owned.length === 0}
-      <div class="hint">Du hast noch keine Avatare freigeschaltet.</div>
+      <div class="hint">{i18n.t('shop.ownedEmpty')}</div>
     {/if}
   {/if}
 </div>
