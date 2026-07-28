@@ -5,6 +5,8 @@
   import ImageUpload from '$lib/components/ImageUpload.svelte';
   import CardFilter from '$lib/components/CardFilter.svelte';
   import { applyFilter, gameCounts, defaultFilter, type FilterFields } from '$lib/features/collection/filter';
+  import { i18n } from '$lib/i18n.svelte';
+  const t = i18n.t;
 
   let mode = $state<'sealed' | 'graded'>('sealed');
   let sealed = $state<SealedItem[]>([]); let graded = $state<GradedCard[]>([]);
@@ -29,7 +31,7 @@
   async function load() {
     loading = true; status = '';
     try { if (mode === 'sealed') sealed = await listSealed(); else graded = await listGraded(); }
-    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
+    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? t('common.pleaseLoginShort') : m; }
     finally { loading = false; }
   }
   onMount(load);
@@ -76,7 +78,7 @@
   }
   async function sellSealedNow() {
     if (editingId == null) return;
-    if (!confirm('Als verkauft markieren? Das Produkt wandert in den Reiter „Verkauft".')) return;
+    if (!confirm(t('ex.confirmSell'))) return;
     busy = -1;
     try {
       await sellSealed(editingId, sellPrice);
@@ -106,67 +108,67 @@
       showAdd = false; editingId = null; resetGradedForm(); await load();
     } catch (e) { status = (e as Error).message; } finally { busy = null; }
   }
-  async function delSealed(x: SealedItem) { if (!confirm(`„${x.name}" löschen?`)) return; busy = x.id; try { await deleteSealed(x.id); sealed = sealed.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
-  async function delGraded(x: GradedCard) { if (!confirm(`„${x.name}" löschen?`)) return; busy = x.id; try { await deleteGraded(x.id); graded = graded.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
+  async function delSealed(x: SealedItem) { if (!confirm(t('ex.confirmDelete', { name: x.name }))) return; busy = x.id; try { await deleteSealed(x.id); sealed = sealed.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
+  async function delGraded(x: GradedCard) { if (!confirm(t('ex.confirmDelete', { name: x.name }))) return; busy = x.id; try { await deleteGraded(x.id); graded = graded.filter((y) => y.id !== x.id); } catch (e) { status = (e as Error).message; } finally { busy = null; } }
 </script>
 
 <svelte:window onkeydown={onkey} />
 
 <div class="coll-head">
   <div class="modes">
-    <button class:active={mode === 'sealed'} onclick={() => switchMode('sealed')}>Versiegelt</button>
-    <button class:active={mode === 'graded'} onclick={() => switchMode('graded')}>Graded</button>
+    <button class:active={mode === 'sealed'} onclick={() => switchMode('sealed')}>{t('ex.sealed')}</button>
+    <button class:active={mode === 'graded'} onclick={() => switchMode('graded')}>{t('ex.graded')}</button>
   </div>
   <div class="right">
-    <span class="muted">{mode === 'sealed' ? sealed.length + ' Produkte · ' + fmt(sealedTotal) : graded.length + ' Karten · ' + fmt(gradedTotal, 'USD')}</span>
-    <button class="primary" onclick={toggleAdd}>{showAdd ? 'Abbrechen' : '+ Hinzufügen'}</button>
+    <span class="muted">{mode === 'sealed' ? t('ex.products', { n: sealed.length, v: fmt(sealedTotal) }) : t('ex.gradedCount', { n: graded.length, v: fmt(gradedTotal, 'USD') })}</span>
+    <button class="primary" onclick={toggleAdd}>{showAdd ? t('ex.cancel') : t('ex.add')}</button>
   </div>
 </div>
 
 {#if showAdd}
   <div class="ov" onclick={closeForm} role="presentation">
     <div class="addform dlg" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()}>
-      <button class="x" onclick={closeForm} aria-label="Schließen">✕</button>
-      <div class="formtitle">{editingId != null ? '✎ Bearbeiten' : '+ Neu hinzufügen'}</div>
+      <button class="x" onclick={closeForm} aria-label={t('prog.close')}>✕</button>
+      <div class="formtitle">{editingId != null ? t('ex.editTitle') : t('ex.addNew')}</div>
     {#if mode === 'sealed'}
       <div class="grid2">
-        <label>Name<input bind:value={sf.name} placeholder="z. B. Display Obsidian Flames" /></label>
-        <label>Spiel<select bind:value={sf.game}>{#each GAMES as g (g)}<option value={g}>{GAME_LABEL[g] ?? g}</option>{/each}</select></label>
-        <label>Produkttyp
+        <label>{t('ex.name')}<input bind:value={sf.name} placeholder={t('ex.namePhSealed')} /></label>
+        <label>{t('ex.game')}<select bind:value={sf.game}>{#each GAMES as g (g)}<option value={g}>{GAME_LABEL[g] ?? g}</option>{/each}</select></label>
+        <label>{t('ex.productType')}
           <select bind:value={sf.product_type}>
-            {#each SEALED_TYPES as t (t)}<option value={t}>{t}</option>{/each}
-            <option value="__custom__">Sonstiges…</option>
+            {#each SEALED_TYPES as st (st)}<option value={st}>{st}</option>{/each}
+            <option value="__custom__">{t('ex.other')}</option>
           </select>
         </label>
-        {#if sf.product_type === '__custom__'}<label>Eigener Typ<input bind:value={customType} placeholder="z. B. Sammelkoffer" /></label>{/if}
-        <label>Set<input bind:value={sf.set_name} placeholder="Set-Name (optional)" /></label>
-        <label>Menge<input type="number" min="1" bind:value={sf.quantity} /></label>
-        <label>Kaufpreis (€)<input type="number" min="0" step="0.01" bind:value={sf.purchase_price} /></label>
-        <label>Aktueller Wert (€)<input type="number" min="0" step="0.01" bind:value={sf.current_value} /></label>
+        {#if sf.product_type === '__custom__'}<label>{t('ex.customType')}<input bind:value={customType} placeholder={t('ex.customTypePh')} /></label>{/if}
+        <label>{t('ex.set')}<input bind:value={sf.set_name} placeholder={t('ex.setPh')} /></label>
+        <label>{t('ex.qty')}<input type="number" min="1" bind:value={sf.quantity} /></label>
+        <label>{t('ex.buyPriceEur')}<input type="number" min="0" step="0.01" bind:value={sf.purchase_price} /></label>
+        <label>{t('ex.currentValueEur')}<input type="number" min="0" step="0.01" bind:value={sf.current_value} /></label>
       </div>
-      <div class="imgfield"><span class="imgfield-l">Bild (optional)</span><ImageUpload bind:value={sf.image_url} folder="sealed" /></div>
-      <button class="primary" onclick={submitSealed} disabled={busy === -1 || !sf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
+      <div class="imgfield"><span class="imgfield-l">{t('ex.imageOptional')}</span><ImageUpload bind:value={sf.image_url} folder="sealed" /></div>
+      <button class="primary" onclick={submitSealed} disabled={busy === -1 || !sf.name.trim()}>{editingId != null ? t('ex.update') : t('ex.save')}</button>
       {#if editingId != null}
         <div class="sellbox">
-          <label class="selllabel">Verkaufspreis (€)<input type="number" min="0" step="0.01" bind:value={sellPrice} /></label>
-          <button class="sellbtn" onclick={sellSealedNow} disabled={busy === -1}>Als verkauft markieren →</button>
+          <label class="selllabel">{t('ex.sellPriceEur')}<input type="number" min="0" step="0.01" bind:value={sellPrice} /></label>
+          <button class="sellbtn" onclick={sellSealedNow} disabled={busy === -1}>{t('ex.markSold')}</button>
         </div>
       {/if}
     {:else}
       <div class="grid2">
-        <label>Name<input bind:value={gf.name} placeholder="z. B. Charizard" /></label>
-        <label>Set<input bind:value={gf.set_name} placeholder="Set (optional)" /></label>
-        <label>Nummer<input bind:value={gf.number} placeholder="z. B. 4/102" /></label>
-        <label>Firma<select bind:value={gf.company}>{#each COMPANIES as c (c)}<option>{c}</option>{/each}</select></label>
-        <label>Grade<input bind:value={gf.grade} placeholder="z. B. 10, 9.5" /></label>
-        <label>Zertifikat<input bind:value={gf.cert} placeholder="Cert-Nr. (optional)" /></label>
-        <label>Wert ($)<input type="number" min="0" step="0.01" bind:value={gf.value} /></label>
-        <label>Kaufpreis ($)<input type="number" min="0" step="0.01" bind:value={gf.purchase_price} /></label>
+        <label>{t('ex.name')}<input bind:value={gf.name} placeholder={t('ex.namePhGraded')} /></label>
+        <label>{t('ex.set')}<input bind:value={gf.set_name} placeholder={t('ex.setPhGraded')} /></label>
+        <label>{t('ex.number')}<input bind:value={gf.number} placeholder={t('ex.numberPh')} /></label>
+        <label>{t('ex.company')}<select bind:value={gf.company}>{#each COMPANIES as c (c)}<option>{c}</option>{/each}</select></label>
+        <label>{t('ex.grade')}<input bind:value={gf.grade} placeholder={t('ex.gradePh')} /></label>
+        <label>{t('ex.cert')}<input bind:value={gf.cert} placeholder={t('ex.certPh')} /></label>
+        <label>{t('ex.valueUsd')}<input type="number" min="0" step="0.01" bind:value={gf.value} /></label>
+        <label>{t('ex.buyPriceUsd')}<input type="number" min="0" step="0.01" bind:value={gf.purchase_price} /></label>
       </div>
-      <div class="imgfield"><span class="imgfield-l">Bild (optional)</span><ImageUpload bind:value={gf.image_url} folder="graded" /></div>
-      <button class="primary" onclick={submitGraded} disabled={busy === -1 || !gf.name.trim()}>{editingId != null ? 'Aktualisieren' : 'Speichern'}</button>
+      <div class="imgfield"><span class="imgfield-l">{t('ex.imageOptional')}</span><ImageUpload bind:value={gf.image_url} folder="graded" /></div>
+      <button class="primary" onclick={submitGraded} disabled={busy === -1 || !gf.name.trim()}>{editingId != null ? t('ex.update') : t('ex.save')}</button>
     {/if}
-      {#if editingId != null}<button class="modaldel" onclick={delFromModal} disabled={busy === -1}>Aus Bestand löschen</button>{/if}
+      {#if editingId != null}<button class="modaldel" onclick={delFromModal} disabled={busy === -1}>{t('ex.deleteFromStock')}</button>{/if}
     </div>
   </div>
 {/if}
@@ -174,61 +176,61 @@
 {#if status}<div class="hint">{status}</div>{/if}
 
 {#if mode === 'sealed'}
-  {#if !sealed.length && !loading}<div class="hint">Noch keine versiegelten Produkte.</div>{/if}
+  {#if !sealed.length && !loading}<div class="hint">{t('ex.emptySealed')}</div>{/if}
   {#if sealed.length}
     <CardFilter bind:state={filter} games={sealedGames} sorts={['name', 'price_desc', 'price_asc']} total={byType.length} shown={filteredSealed.length} />
     <div class="filterbar">
-      <label>Typ filtern
+      <label>{t('ex.filterType')}
         <select bind:value={typeFilter}>
-          <option value="">Alle ({sealed.length})</option>
-          {#each sealedTypeCounts as t (t.type)}<option value={t.type}>{t.type} ({t.n})</option>{/each}
+          <option value="">{t('ex.filterAll', { n: sealed.length })}</option>
+          {#each sealedTypeCounts as tc (tc.type)}<option value={tc.type}>{tc.type} ({tc.n})</option>{/each}
         </select>
       </label>
     </div>
   {/if}
-  {#if typeFilter && !filteredSealed.length}<div class="hint">Keine Produkte mit diesem Typ.</div>{/if}
+  {#if typeFilter && !filteredSealed.length}<div class="hint">{t('ex.noType')}</div>{/if}
   <div class="grid">
     {#each filteredSealed as x (x.id)}
       <div class="card" class:busy={busy === x.id}>
         <span class="tag {x.game}">{GAME_LABEL[x.game] ?? x.game}</span>
-        {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditSealed(x)} />{:else}<div class="boxph">📦</div>{/if}
+        {#if x.image_url}<img src={x.image_url} alt={x.name} loading="lazy" style="cursor:zoom-in" onclick={() => startEditSealed(x)} />{:else}<div class="boxph">📦</div>{/if}
         <div class="meta">
           <div class="name">{x.name}</div>
           <div class="set">{x.product_type}{#if x.set_name}{' · '}{x.set_name}{/if}{#if x.quantity > 1}{' · '}×{x.quantity}{/if}</div>
-          <div class="price">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : 'kein Preis'}</div>
+          <div class="price">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : t('coll.noPrice')}</div>
           {#if x.purchase_price != null}
-            <div class="subline"><span class="ek">EK {fmt(x.purchase_price, x.currency ?? 'EUR')}</span>{#if x.current_value != null}<span class="pl" class:pos={(x.current_value - x.purchase_price) >= 0}>{(x.current_value - x.purchase_price) >= 0 ? '+' : ''}{fmt((x.current_value - x.purchase_price) * (x.quantity ?? 1), x.currency ?? 'EUR')}</span>{/if}</div>
+            <div class="subline"><span class="ek">{t('ex.buyShort', { v: fmt(x.purchase_price, x.currency ?? 'EUR') })}</span>{#if x.current_value != null}<span class="pl" class:pos={(x.current_value - x.purchase_price) >= 0}>{(x.current_value - x.purchase_price) >= 0 ? '+' : ''}{fmt((x.current_value - x.purchase_price) * (x.quantity ?? 1), x.currency ?? 'EUR')}</span>{/if}</div>
           {/if}
         </div>
         <div class="card-actions">
-          <button class="act" onclick={() => startEditSealed(x)} disabled={busy === x.id}>✎ Bearbeiten</button>
-          <button class="act delx" onclick={() => delSealed(x)} disabled={busy === x.id} title="Löschen">✕</button>
+          <button class="act" onclick={() => startEditSealed(x)} disabled={busy === x.id}>{t('ex.edit')}</button>
+          <button class="act delx" onclick={() => delSealed(x)} disabled={busy === x.id} title={t('alerts.delete')}>✕</button>
         </div>
       </div>
     {/each}
   </div>
 {:else}
-  {#if !graded.length && !loading}<div class="hint">Noch keine gegradeten Karten.</div>{/if}
+  {#if !graded.length && !loading}<div class="hint">{t('ex.emptyGraded')}</div>{/if}
   {#if graded.length}
     <CardFilter bind:state={filter} sorts={['name', 'price_desc', 'price_asc']} total={graded.length} shown={shownGraded.length} />
   {/if}
-  {#if graded.length && !shownGraded.length}<div class="hint">Keine Karten passen zu Suche/Filter.</div>{/if}
+  {#if graded.length && !shownGraded.length}<div class="hint">{t('coll.noFilterMatch')}</div>{/if}
   <div class="grid">
     {#each shownGraded as x (x.id)}
       <div class="card" class:busy={busy === x.id}>
         <span class="gbadge {x.company}">{x.company} {x.grade}</span>
-        {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditGraded(x)} />{:else}<div class="boxph">🎴</div>{/if}
+        {#if x.image_url}<img src={x.image_url} alt={x.name} loading="lazy" style="cursor:zoom-in" onclick={() => startEditGraded(x)} />{:else}<div class="boxph">🎴</div>{/if}
         <div class="meta">
           <div class="name">{x.name}</div>
           <div class="set">{x.set_name ?? ''}{#if x.number}{' · '}{x.number}{/if}{#if x.cert}{' · '}Cert {x.cert}{/if}</div>
-          <div class="price">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : 'kein Preis'}</div>
+          <div class="price">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : t('coll.noPrice')}</div>
           {#if x.purchase_price != null}
-            <div class="subline"><span class="ek">EK {fmt(x.purchase_price, x.currency ?? 'USD')}</span>{#if x.value != null}<span class="pl" class:pos={(x.value - x.purchase_price) >= 0}>{(x.value - x.purchase_price) >= 0 ? '+' : ''}{fmt(x.value - x.purchase_price, x.currency ?? 'USD')}</span>{/if}</div>
+            <div class="subline"><span class="ek">{t('ex.buyShort', { v: fmt(x.purchase_price, x.currency ?? 'USD') })}</span>{#if x.value != null}<span class="pl" class:pos={(x.value - x.purchase_price) >= 0}>{(x.value - x.purchase_price) >= 0 ? '+' : ''}{fmt(x.value - x.purchase_price, x.currency ?? 'USD')}</span>{/if}</div>
           {/if}
         </div>
         <div class="card-actions">
-          <button class="act" onclick={() => startEditGraded(x)} disabled={busy === x.id}>✎ Bearbeiten</button>
-          <button class="act delx" onclick={() => delGraded(x)} disabled={busy === x.id} title="Löschen">✕</button>
+          <button class="act" onclick={() => startEditGraded(x)} disabled={busy === x.id}>{t('ex.edit')}</button>
+          <button class="act delx" onclick={() => delGraded(x)} disabled={busy === x.id} title={t('alerts.delete')}>✕</button>
         </div>
       </div>
     {/each}
