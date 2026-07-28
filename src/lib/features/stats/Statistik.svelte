@@ -1,14 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { computeStats, recordSnapshot, getValueHistory, mergeMoney, type Stats, type Bucket, type Money, type HistPoint } from '$lib/services/stats.service';
-  import { fmt, GAME_LABEL } from '$lib/format';
+  import { computeStats, recordSnapshot, getValueHistory, mergeMoney, magnitude, type Stats, type Bucket, type Money, type HistPoint } from '$lib/services/stats.service';
+  import { fmt, money, GAME_LABEL } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
 
-  // Betraege pro Waehrung anzeigen (z. B. "1.234,56 € · 78,90 $").
-  function money(m: Money): string {
-    const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
-    return e.length ? e.map(([c, v]) => fmt(v, c)).join(' · ') : fmt(0);
-  }
   function moneySigned(m: Money): string {
     const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
     return e.length ? e.map(([c, v]) => (v >= 0 ? '+' : '') + fmt(v, c)).join(' · ') : fmt(0);
@@ -32,7 +27,7 @@
   onMount(load);
 
   const cardsPlusSealed = $derived<Money>(s ? mergeMoney(s.value, s.sealedValue) : {});
-  function maxVal(items: Bucket[]): number { return items.reduce((m, b) => Math.max(m, b.value), 0) || 1; }
+  function maxVal(items: Bucket[]): number { return items.reduce((m, b) => Math.max(m, magnitude(b.value)), 0) || 1; }
   function shortDay(d: string): string { try { return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }); } catch { return d; } }
 
   // SVG-Wertverlauf
@@ -108,8 +103,8 @@
     {#each items as b (b.key)}
       <div class="bar-row">
         <span class="bl">{b.key}</span>
-        <span class="bt"><span class="bf" style="width:{Math.max(3, (b.value / maxVal(items)) * 100).toFixed(0)}%"></span></span>
-        <span class="bv">{fmt(b.value)}</span>
+        <span class="bt"><span class="bf" style="width:{Math.max(3, (magnitude(b.value) / maxVal(items)) * 100).toFixed(0)}%"></span></span>
+        <span class="bv">{money(b.value)}</span>
       </div>
     {/each}
   {/snippet}
@@ -117,7 +112,7 @@
   <div class="anrows">
     <div class="ancard"><h3>🎮 Nach Spiel</h3>
       {#each s.byGame as g (g.key)}
-        <div class="bar-row"><span class="bl">{GAME_LABEL[g.key] ?? g.key}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (g.value / maxVal(s.byGame)) * 100).toFixed(0)}%"></span></span><span class="bv">{fmt(g.value, g.currency ?? 'EUR')}</span></div>
+        <div class="bar-row"><span class="bl">{GAME_LABEL[g.key] ?? g.key}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (magnitude(g.value) / maxVal(s.byGame)) * 100).toFixed(0)}%"></span></span><span class="bv">{money(g.value)}</span></div>
       {/each}
     </div>
     {#if s.byRarity.length}<div class="ancard"><h3>✨ Nach Seltenheit</h3>{@render bars(s.byRarity)}</div>{/if}

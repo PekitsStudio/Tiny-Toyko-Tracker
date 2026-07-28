@@ -9,7 +9,7 @@
   import { discoverShowcases, type Showcase } from '$lib/services/showcase.service';
   import { listAlerts, type PriceAlert } from '$lib/services/alerts.service';
   import { nav } from '$lib/stores/nav.svelte';
-  import { fmt, GAME_LABEL } from '$lib/format';
+  import { fmt, money } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
 
   let value = $state<Record<string, number>>({}); let cardCount = $state(0); let uniqueCount = $state(0);
@@ -58,11 +58,6 @@
   onMount(load);
 
   function sinceLabel(d: string): string { try { return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }); } catch { return d; } }
-  // Betraege pro Waehrung anzeigen (z. B. "1.234 € · 78 $").
-  function money(m: Record<string, number>): string {
-    const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
-    return e.length ? e.map(([c, v]) => fmt(v, c)).join(' · ') : fmt(0);
-  }
   async function claimQ(q: Quest) { try { cp = await claimQuest(q); q.claimed = true; if (dq) dq = { ...dq }; } catch { /* egal */ } }
   function openDetail(c: CollectionCard) {
     detail.open({ game: c.game, name: c.name, imageUrl: c.image_url, setName: c.set_name, number: c.number, rarity: c.rarity, lang: c.language, price: c.price_current, currency: c.currency, condition: c.condition, quantity: c.quantity, cardId: c.id, notes: c.notes, forSale: c.for_sale, askingPrice: c.asking_price });

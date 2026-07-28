@@ -25,6 +25,13 @@ export const langLabel = (code?: string): string => {
 export const fmt = (n?: number | null, cur = 'EUR'): string =>
   (n ?? 0).toLocaleString(cur === 'USD' ? 'en-US' : 'de-DE', { style: 'currency', currency: cur });
 
+// Betraege pro Waehrung anzeigen (z. B. "1.234,56 € · 78,90 $"). Vermeidet das
+// faelschliche Aufsummieren gemischter Waehrungen zu einem Euro-Wert.
+export const money = (m: Record<string, number>): string => {
+  const e = Object.entries(m).filter(([, v]) => Math.abs(v) > 0.005);
+  return e.length ? e.map(([c, v]) => fmt(v, c)).join(' · ') : fmt(0);
+};
+
 export function refText(c: SearchCard): string {
   const code = c.setCode || c.set_code || '', number = c.number || '';
   if (code && number && !String(number).toUpperCase().includes(String(code).toUpperCase())) return `${code} · ${number}`;

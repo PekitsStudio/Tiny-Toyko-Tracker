@@ -5,8 +5,13 @@ import { listSealed, listGraded } from '$lib/services/extras.service';
 // Geldbetraege werden pro Waehrung getrennt gefuehrt (EUR/USD gemischt), damit
 // nichts faelschlich als ein Euro-Wert aufsummiert wird.
 export type Money = Record<string, number>;
-export interface Bucket { key: string; count: number; value: number; currency?: string; }
+export interface Bucket { key: string; count: number; value: Money; }
 export interface TopCard { id: number; name: string; image_url: string | null; game: string; value: number; quantity: number; currency: string | null; }
+
+// Eingaben fuer die reine Aggregation (DB-frei -> ohne Mocking testbar).
+export interface AggSold { quantity: number | null; sold_price: number | null; purchase_price: number | null; currency: string | null; }
+export interface AggSealed { current_value: number | null; quantity: number | null; currency: string | null; }
+export interface AggGraded { value: number | null; }
 
 export interface Stats {
 	cardCount: number; uniqueCount: number;
@@ -27,27 +32,31 @@ export function mergeMoney(...maps: Money[]): Money {
 	for (const m of maps) for (const [c, v] of Object.entries(m)) out[c] = (out[c] ?? 0) + v;
 	return out;
 }
+// Vergleichs-/Sortiergroesse eines Money-Werts (Summe der Betraege ueber alle Waehrungen).
+export function magnitude(m: Money): number {
+	return Object.values(m).reduce((a, v) => a + Math.abs(v), 0);
+}
 
+// Gruppiert nach Schluessel UND Waehrung -> jede Gruppe traegt eine Money-Map.
 function bucketize(cards: CollectionCard[], keyFn: (c: CollectionCard) => string | null | undefined): Bucket[] {
-	const m = new Map<string, { count: number; value: number }>();
+	const m = new Map<string, { count: number; value: Money }>();
 	for (const c of cards) {
 		const raw = keyFn(c);
 		const key = raw && String(raw).trim() ? String(raw).trim() : '—';
 		const q = c.quantity ?? 1;
-		const b = m.get(key) ?? { count: 0, value: 0 };
+		const b = m.get(key) ?? { count: 0, value: {} };
 		b.count += q;
-		b.value += (c.price_current ?? 0) * q;
+		addMoney(b.value, c.currency, (c.price_current ?? 0) * q);
 		m.set(key, b);
 	}
-	return [...m.entries()].map(([key, b]) => ({ key, ...b })).sort((a, b) => b.value - a.value);
+	return [...m.entries()].map(([key, b]) => ({ key, count: b.count, value: b.value })).sort((a, b) => magnitude(b.value) - magnitude(a.value));
 }
 
-export async function computeStats(): Promise<Stats> {
-	const [cards, sold, sealed, graded] = await Promise.all([listCards(), listSold(), listSealed(), listGraded()]);
-
+// Reine Aggregation ohne Datenbank – separat testbar.
+export function aggregate(cards: CollectionCard[], sold: AggSold[], sealed: AggSealed[], graded: AggGraded[]): Stats {
 	let cardCount = 0;
 	const value: Money = {}, invValue: Money = {}, invested: Money = {};
-	const games = new Map<string, { count: number; value: number; currency: string }>();
+	const games = new Map<string, { count: number; value: Money }>();
 	for (const c of cards) {
 		const q = c.quantity ?? 1;
 		const cur = c.currency || 'EUR';
@@ -55,8 +64,8 @@ export async function computeStats(): Promise<Stats> {
 		const v = (c.price_current ?? 0) * q;
 		addMoney(value, cur, v);
 		if (c.purchase_price != null) { addMoney(invested, cur, c.purchase_price * q); addMoney(invValue, cur, (c.price_current ?? 0) * q); }
-		const g = games.get(c.game) ?? { count: 0, value: 0, currency: cur };
-		g.count += q; g.value += v; g.currency = cur; games.set(c.game, g);
+		const g = games.get(c.game) ?? { count: 0, value: {} };
+		g.count += q; addMoney(g.value, cur, v); games.set(c.game, g);
 	}
 	const unrealized: Money = {};
 	for (const cur of new Set([...Object.keys(invValue), ...Object.keys(invested)])) {
@@ -72,6 +81,7 @@ export async function computeStats(): Promise<Stats> {
 
 	const sealedValue: Money = {};
 	for (const x of sealed) addMoney(sealedValue, x.currency, (x.current_value ?? 0) * (x.quantity ?? 1));
+	// Graded-Preise kommen ausschliesslich ueber PokemonPriceTracker in USD -> bewusst eine einzelne USD-Zahl.
 	const gradedValue = graded.reduce((a, x) => a + (x.value ?? 0), 0);
 
 	const topCards: TopCard[] = [...cards]
@@ -82,7 +92,7 @@ export async function computeStats(): Promise<Stats> {
 
 	return {
 		cardCount, uniqueCount: cards.length, value, invested, unrealized, realized, soldProceeds,
-		byGame: [...games.entries()].map(([game, g]) => ({ key: game, count: g.count, value: g.value, currency: g.currency })).sort((a, b) => b.value - a.value),
+		byGame: [...games.entries()].map(([game, g]) => ({ key: game, count: g.count, value: g.value })).sort((a, b) => magnitude(b.value) - magnitude(a.value)),
 		byRarity: bucketize(cards, (c) => c.rarity).slice(0, 10),
 		bySet: bucketize(cards, (c) => c.set_name).slice(0, 10),
 		byCondition: bucketize(cards, (c) => c.condition),
@@ -90,6 +100,11 @@ export async function computeStats(): Promise<Stats> {
 		topCards,
 		sealedValue, gradedValue
 	};
+}
+
+export async function computeStats(): Promise<Stats> {
+	const [cards, sold, sealed, graded] = await Promise.all([listCards(), listSold(), listSealed(), listGraded()]);
+	return aggregate(cards, sold as unknown as AggSold[], sealed as unknown as AggSealed[], graded as unknown as AggGraded[]);
 }
 
 // --- Wertverlauf (value_history) --------------------------------------------

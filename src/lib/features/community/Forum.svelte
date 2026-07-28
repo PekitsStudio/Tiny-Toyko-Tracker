@@ -7,7 +7,7 @@
 
   let cat = $state<ForumCategory | ''>('');
   let threads = $state<ForumThread[]>([]);
-  let status = $state(''); let loading = $state(false); let busy = $state(false);
+  let status = $state(''); let busy = $state(false);
   let showCreate = $state(false);
   let cf = $state({ category: 'general' as ForumCategory, title: '', body: '' });
 
@@ -16,10 +16,9 @@
   let reply = $state('');
 
   async function load() {
-    loading = true; status = ''; openThread = null;
+    status = ''; openThread = null;
     try { threads = await listThreads(cat || undefined); if (!threads.length) status = 'Noch keine Themen.'; }
     catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
-    finally { loading = false; }
   }
   onMount(load);
   function dt(iso: string) { try { return new Date(iso).toLocaleDateString('de-DE'); } catch { return ''; } }
