@@ -3,6 +3,7 @@
   import { getProgress, setCollectorPath, claimAchievement, COLLECTOR_PATHS, type Progress, type Achievement } from '$lib/services/gamification.service';
   import { getQuests, claimQuest, type QuestData, type Quest } from '$lib/services/quests.service';
   import { fmt } from '$lib/format';
+  import { i18n } from '$lib/i18n.svelte';
 
   let p = $state<Progress | null>(null);
   let quests = $state<QuestData | null>(null);
@@ -16,7 +17,7 @@
       p = await getProgress(); path = p.path ?? ''; cp = p.cp;
       try { quests = await getQuests(); cp = quests.cp; } catch { quests = null; }
     }
-    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? 'Bitte oben anmelden.' : m; }
+    catch (e) { const m = (e as Error).message; status = m === 'Nicht eingeloggt' ? i18n.t('common.pleaseLoginShort') : m; }
     finally { loading = false; }
   }
   onMount(load);
@@ -47,11 +48,6 @@
     return a.nextThreshold != null ? `${numFmt(a, a.value)} / ${numFmt(a, a.nextThreshold)}` : numFmt(a, a.value);
   }
 
-  const CAT_DESC: Record<string, string> = {
-    Sammlung: 'Deine Karten', Wert: 'Portfolio-Wert', Verkäufer: 'Verkäufe', Handel: 'Trades',
-    Community: 'Beiträge & Reaktionen', Social: 'Freunde', Preisjäger: 'Preisalarme', Streak: 'Aktivität', Selten: 'Besondere Erfolge'
-  };
-
   const groups = $derived.by(() => {
     if (!p) return [] as [string, Achievement[]][];
     const m = new Map<string, Achievement[]>();
@@ -72,9 +68,9 @@
 
 <svelte:window onkeydown={onkey} />
 
-<h2>Fortschritt</h2>
+<h2>{i18n.t('prog.title')}</h2>
 {#if status}<div class="hint">{status}</div>{/if}
-{#if loading && !p}<div class="hint">Lädt…</div>{/if}
+{#if loading && !p}<div class="hint">{i18n.t('common.loading')}</div>{/if}
 
 {#if p}
   <!-- 1) Wer bin ich: Level + Badges -->
@@ -83,17 +79,17 @@
       <div class="ringn"><span>Lv</span><b>{p.level}</b></div>
     </div>
     <div class="hmain">
-      <div class="htop"><b>Level {p.level}</b><span class="muted">{p.into} / {p.need} XP</span></div>
+      <div class="htop"><b>{i18n.t('prof.level', { n: p.level })}</b><span class="muted">{p.into} / {p.need} XP</span></div>
       <div class="xpbar"><span class="xpfill" style="width:{Math.max(3, (p.into / p.need) * 100).toFixed(0)}%"></span></div>
       <div class="chips">
         <span class="chip cp">🪙 {cp} CP</span>
-        <span class="chip fire">🔥 Streak {p.streak}{#if p.bestStreak > p.streak}{' · '}Best {p.bestStreak}{/if}</span>
-        <span class="chip">🏅 {p.earned}/{p.total} Erfolge</span>
+        <span class="chip fire">{i18n.t('prog.streak', { n: p.streak })}{#if p.bestStreak > p.streak}{' · '}{i18n.t('prog.best', { n: p.bestStreak })}{/if}</span>
+        <span class="chip">{i18n.t('prog.ach', { e: p.earned, t: p.total })}</span>
       </div>
     </div>
     {#if p.badges.length}
       <div class="bwrap">
-        <div class="blabel">Aktive Badges</div>
+        <div class="blabel">{i18n.t('prog.activeBadges')}</div>
         <div class="bbig">{#each p.badges.slice(0, 6) as b}<span class="bchip">{b}</span>{/each}</div>
       </div>
     {/if}
@@ -117,11 +113,11 @@
   {#if quests}
     <div class="quests">
       <section class="qbox">
-        <div class="qh"><h3>☀️ Heute</h3><span class="muted small">neu jeden Tag</span></div>
+        <div class="qh"><h3>{i18n.t('prog.today')}</h3><span class="muted small">{i18n.t('prog.todaySub')}</span></div>
         {#each quests.daily as quest (quest.id)}{@render questRow(quest)}{/each}
       </section>
       <section class="qbox">
-        <div class="qh"><h3>🗓️ Diese Woche</h3><span class="muted small">neu jeden Montag</span></div>
+        <div class="qh"><h3>{i18n.t('prog.week')}</h3><span class="muted small">{i18n.t('prog.weekSub')}</span></div>
         {#each quests.weekly as quest (quest.id)}{@render questRow(quest)}{/each}
       </section>
     </div>
@@ -130,7 +126,7 @@
   <!-- 3) Nächstes großes Ziel -->
   {#if nextAch}
     <section class="next" onclick={() => (sel = nextAch)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') sel = nextAch; }}>
-      <div class="nlabel">⭐ Nächstes Achievement</div>
+      <div class="nlabel">{i18n.t('prog.nextAch')}</div>
       <div class="nrow">
         <div class="nic rar-{nextAch.rarity === 'locked' ? 'bronze' : nextAch.rarity}">{nextAch.icon}</div>
         <div class="nmain">
@@ -140,7 +136,7 @@
         </div>
         <div class="nside">
           <div class="nval">{valLabel(nextAch)}</div>
-          <div class="nrew">Belohnung +{nextAch.cp} CP</div>
+          <div class="nrew">{i18n.t('prog.reward', { cp: nextAch.cp })}</div>
         </div>
       </div>
     </section>
@@ -150,22 +146,22 @@
   <section class="pathcard">
     <div class="picon">{activePath?.icon ?? '🧭'}</div>
     <div class="pmain">
-      <div class="ptitle">{activePath ? activePath.label : 'Kein Sammlerpfad gewählt'}</div>
-      <div class="muted small">{activePath ? '⭐ Aktiver Pfad · Spezialquests & exklusive Titel (bald)' : 'Wähle einen Schwerpunkt für passende Titel & Quests.'}</div>
+      <div class="ptitle">{activePath ? i18n.t('path.' + activePath.key) : i18n.t('prog.noPath')}</div>
+      <div class="muted small">{activePath ? i18n.t('prog.pathActive') : i18n.t('prog.pathHint')}</div>
     </div>
     <div class="ppick">
       <select bind:value={path}>
-        <option value="">— keiner —</option>
-        {#each COLLECTOR_PATHS as c (c.key)}<option value={c.key}>{c.icon} {c.label}</option>{/each}
+        <option value="">{i18n.t('prog.pathNone')}</option>
+        {#each COLLECTOR_PATHS as c (c.key)}<option value={c.key}>{c.icon} {i18n.t('path.' + c.key)}</option>{/each}
       </select>
-      <button class="save" onclick={savePath} disabled={pathBusy}>{pathBusy ? '…' : 'Wechseln'}</button>
+      <button class="save" onclick={savePath} disabled={pathBusy}>{pathBusy ? '…' : i18n.t('prog.pathSwitch')}</button>
     </div>
   </section>
 
   <!-- 4) Alle Achievements als Kapitel -->
   {#each groups as [cat, items] (cat)}
     <div class="chead">
-      <h3>{cat}</h3><span class="muted small">{CAT_DESC[cat] ?? ''} · {items.filter((a) => a.reached >= 0).length}/{items.length}</span>
+      <h3>{i18n.t('cat.' + cat)}</h3><span class="muted small">{i18n.t('catd.' + cat)} · {items.filter((a) => a.reached >= 0).length}/{items.length}</span>
     </div>
     <div class="agrid">
       {#each items as a (a.id)}
@@ -187,7 +183,7 @@
 {#if sel}
   <div class="ov" onclick={() => (sel = null)} role="presentation">
     <div class="odlg rar-{sel.rarity === 'locked' ? 'bronze' : sel.rarity}" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()}>
-      <button class="ox" onclick={() => (sel = null)} aria-label="Schließen">✕</button>
+      <button class="ox" onclick={() => (sel = null)} aria-label={i18n.t('prog.close')}>✕</button>
       <div class="oic rar-{sel.rarity === 'locked' ? 'bronze' : sel.rarity}">{sel.icon}</div>
       <div class="ocat">{sel.cat}{#if sel.reached >= 0 && sel.tierLabels[sel.reached]}{' · '}{sel.tierLabels[sel.reached]}{/if}</div>
       <h3 class="oname">{sel.name}</h3>
@@ -197,13 +193,13 @@
       {#if sel.tiers.length > 1}
         <div class="otiers">{#each sel.tiers as t, i}<span class="ot" class:on={sel.reached >= i}>{sel.money ? fmt(t) : t}</span>{/each}</div>
       {/if}
-      <div class="oreward">🎁 Belohnung: <b>+{sel.cp} CP</b></div>
+      <div class="oreward">{i18n.t('prog.rewardLabel')} <b>+{sel.cp} CP</b></div>
       {#if sel.claimable}
-        <button class="oclaim" onclick={() => claimAch(sel!)} disabled={claimingId === sel.claimId}>{claimingId === sel.claimId ? '…' : `Belohnung einlösen (+${sel.cp} CP)`}</button>
+        <button class="oclaim" onclick={() => claimAch(sel!)} disabled={claimingId === sel.claimId}>{claimingId === sel.claimId ? '…' : i18n.t('prog.claimReward', { cp: sel.cp })}</button>
       {:else if sel.reached >= 0}
-        <div class="odone">✓ Freigeschaltet – Belohnung erhalten</div>
+        <div class="odone">{i18n.t('prog.unlockedGot')}</div>
       {:else}
-        <div class="omuted">Noch nicht freigeschaltet</div>
+        <div class="omuted">{i18n.t('prog.notUnlocked')}</div>
       {/if}
     </div>
   </div>
