@@ -43,7 +43,7 @@
       <div class="right">
         <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
         <h3>{c.name}</h3>
-        <div class="sub"><Flag lang={c.language} />{c.set_name ?? ''}{#if c.number} · {c.number}{/if}{#if c.language} · {c.language.toUpperCase()}{/if}</div>
+        <div class="sub"><Flag lang={c.language} />{c.set_name ?? ''}{#if c.number}{' · '}{c.number}{/if}{#if c.language}{' · '}{c.language.toUpperCase()}{/if}</div>
 
         <div class="attrs">
           <span class="attr">Zustand <b>{c.condition ?? '–'}</b></span>

@@ -60,7 +60,7 @@
         <div class="set"><Flag lang={w.language} />{w.set_name ?? ''}</div>
         {#if w.rarity}<div class="rarity">{w.rarity}</div>{/if}
         <div class="price">{w.price_current != null ? fmt(w.price_current, w.currency ?? 'EUR') : 'kein Preis'}</div>
-        {#if w.seeking}<div class="seeking">🔎 wird gesucht{#if w.seek_max_price != null} · bis {fmt(w.seek_max_price, w.seek_currency ?? 'EUR')}{/if}</div>{/if}
+        {#if w.seeking}<div class="seeking">🔎 wird gesucht{#if w.seek_max_price != null}{' · '}bis {fmt(w.seek_max_price, w.seek_currency ?? 'EUR')}{/if}</div>{/if}
       </div>
       <div class="card-actions">
         <button class="add" onclick={() => openDetail(w)}>Details</button>

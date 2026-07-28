@@ -41,7 +41,7 @@ function cardRow(c: SearchCard, o: AddOptions, user_id: string) {
 		cardmarket_url: c.cardmarketUrl ?? null,
 		quantity: o.quantity ?? 1,
 		condition: o.condition ?? 'NM',
-		language: o.language ?? c.lang?.toUpperCase() ?? 'DE',
+		language: (o.language ?? c.lang ?? 'DE').toUpperCase(),
 		notes: o.notes ?? null,
 		price_at_add: c.cardmarketPrice ?? null,
 		price_current: c.cardmarketPrice ?? null,
@@ -60,7 +60,7 @@ export async function addCard(c: SearchCard, o: AddOptions = {}) {
 
 export async function addWishlist(c: SearchCard) {
 	const user_id = await currentUserId();
-	const language = c.lang?.toUpperCase() ?? 'DE';
+	const language = (c.lang ?? 'DE').toUpperCase();
 	const existing = await supabase()
 		.from('wishlist')
 		.select('id')

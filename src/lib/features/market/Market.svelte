@@ -73,7 +73,7 @@
         {#if m.image_url}<img src={m.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => openOffer(m)} />{:else}<div class="ph">kein Bild</div>{/if}
         <div class="meta">
           <div class="name">{m.name}</div>
-          <div class="set"><Flag lang={m.language} />{m.set_name ?? ''}{#if m.condition} · {m.condition}{/if}</div>
+          <div class="set"><Flag lang={m.language} />{m.set_name ?? ''}{#if m.condition}{' · '}{m.condition}{/if}</div>
           <div class="price">{m.asking_price != null ? fmt(m.asking_price, m.currency ?? 'EUR') : 'VB'}</div>
           <div class="who">von <button class="link" onclick={() => openProfile(m.seller_id)}>{m.seller_name ?? 'Sammler'}</button>{m.is_mine ? ' (du)' : ''}</div>
           {#if m.seller_contact}<div class="contact">Kontakt: {m.seller_contact}</div>{/if}
@@ -90,9 +90,9 @@
         {#if s.image_url}<img src={s.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => openSeek(s)} />{:else}<div class="ph">kein Bild</div>{/if}
         <div class="meta">
           <div class="name">{s.name}</div>
-          <div class="set"><Flag lang={s.language} />{s.set_name ?? ''}{#if s.seek_condition} · ab {s.seek_condition}{/if}</div>
+          <div class="set"><Flag lang={s.language} />{s.set_name ?? ''}{#if s.seek_condition}{' · '}ab {s.seek_condition}{/if}</div>
           <div class="price">{s.seek_max_price != null ? 'bis ' + fmt(s.seek_max_price, s.seek_currency ?? 'EUR') : 'Preis egal'}</div>
-          <div class="who">sucht <button class="link" onclick={() => openProfile(s.seeker_id)}>{s.seeker_name ?? 'Sammler'}</button>{s.is_mine ? ' (du)' : ''}{#if s.seeker_country} · {s.seeker_country}{/if}</div>
+          <div class="who">sucht <button class="link" onclick={() => openProfile(s.seeker_id)}>{s.seeker_name ?? 'Sammler'}</button>{s.is_mine ? ' (du)' : ''}{#if s.seeker_country}{' · '}{s.seeker_country}{/if}</div>
           {#if s.seeker_contact}<div class="contact">Kontakt: {s.seeker_contact}</div>{/if}
         </div>
       </div>

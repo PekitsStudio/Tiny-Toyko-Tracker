@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { listCards, deleteCard, setCardQuantity, refreshCollectionPrices, type CollectionCard } from '$lib/services/collection.service';
-  import { fmt, GAME_LABEL } from '$lib/format';
+  import { fmt, money, GAME_LABEL } from '$lib/format';
   import Flag from '$lib/components/Flag.svelte';
   import { detail } from '$lib/stores/detail.svelte';
   import CardFilter from '$lib/components/CardFilter.svelte';
@@ -30,7 +30,11 @@
     if (detail.savedTick !== seenTick) { seenTick = detail.savedTick; load(); }
   });
 
-  const total = $derived(cards.reduce((s, c) => s + (c.price_current ?? 0) * (c.quantity ?? 1), 0));
+  const total = $derived.by<Record<string, number>>(() => {
+    const m: Record<string, number> = {};
+    for (const c of cards) { const cur = c.currency || 'EUR'; m[cur] = (m[cur] ?? 0) + (c.price_current ?? 0) * (c.quantity ?? 1); }
+    return m;
+  });
   const count = $derived(cards.reduce((s, c) => s + (c.quantity ?? 1), 0));
 
   async function refreshPrices() {
@@ -62,7 +66,7 @@
 </script>
 
 <div class="coll-head">
-  <div><h2>Deine Sammlung</h2><div class="muted">{count} Karten · Wert {fmt(total)}{#if priceMsg} · {priceMsg}{/if}</div></div>
+  <div><h2>Deine Sammlung</h2><div class="muted">{count} Karten · Wert {money(total)}{#if priceMsg}{' · '}{priceMsg}{/if}</div></div>
   <div class="head-btns">
     <button class="primary" onclick={refreshPrices} disabled={refreshing || loading}>{refreshing ? '…' : 'Preise aktualisieren'}</button>
     <button class="ghost" onclick={load} disabled={loading || refreshing}>{loading ? '…' : 'Neu laden'}</button>

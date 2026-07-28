@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { computeStats, recordSnapshot, getValueHistory, mergeMoney, magnitude, type Stats, type Bucket, type Money, type HistPoint } from '$lib/services/stats.service';
-  import { fmt, money, GAME_LABEL } from '$lib/format';
+  import { fmt, money, langLabel, GAME_LABEL } from '$lib/format';
   import { detail } from '$lib/stores/detail.svelte';
 
   function moneySigned(m: Money): string {
@@ -92,7 +92,7 @@
         <button class="tcard" onclick={() => detail.open({ game: t.game, name: t.name, imageUrl: t.image_url, price: t.value / (t.quantity || 1), currency: t.currency })}>
           <span class="rank">{i + 1}</span>
           {#if t.image_url}<img src={t.image_url} alt="" loading="lazy" />{:else}<div class="tph">?</div>{/if}
-          <div class="tn">{t.name}</div>
+          <div class="tn" title={t.name}>{t.name}</div>
           <div class="tv">{fmt(t.value, t.currency ?? 'EUR')}</div>
         </button>
       {/each}
@@ -118,7 +118,11 @@
     {#if s.byRarity.length}<div class="ancard"><h3>✨ Nach Seltenheit</h3>{@render bars(s.byRarity)}</div>{/if}
     {#if s.bySet.length}<div class="ancard"><h3>📚 Nach Set</h3>{@render bars(s.bySet)}</div>{/if}
     {#if s.byCondition.length}<div class="ancard"><h3>🛡️ Nach Zustand</h3>{@render bars(s.byCondition)}</div>{/if}
-    {#if s.byLanguage.length}<div class="ancard"><h3>🌐 Nach Sprache</h3>{@render bars(s.byLanguage)}</div>{/if}
+    {#if s.byLanguage.length}<div class="ancard"><h3>🌐 Nach Sprache</h3>
+      {#each s.byLanguage as b (b.key)}
+        <div class="bar-row"><span class="bl">{langLabel(b.key)}</span><span class="bt"><span class="bf" style="width:{Math.max(3, (magnitude(b.value) / maxVal(s.byLanguage)) * 100).toFixed(0)}%"></span></span><span class="bv">{money(b.value)}</span></div>
+      {/each}
+    </div>{/if}
   </div>
 {/if}
 

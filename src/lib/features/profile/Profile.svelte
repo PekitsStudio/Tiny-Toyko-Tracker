@@ -55,7 +55,7 @@
     {/if}
     <div class="who">
       <h2>{displayName || auth.user?.email || 'Sammler'}</h2>
-      {#if lvl}<div class="lvline">Level {lvl.level}{#if f.collector_type} · {f.collector_type}{/if}</div>{/if}
+      {#if lvl}<div class="lvline">Level {lvl.level}{#if f.collector_type}{' · '}{f.collector_type}{/if}</div>{/if}
     </div>
   </div>
   {#if lvl}

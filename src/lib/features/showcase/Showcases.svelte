@@ -171,7 +171,7 @@
         </button>
         <div class="sbody">
           <button class="sname" onclick={() => open(s)}>{s.name}</button>
-          <div class="smeta">{s.card_count} Karten · ❤️ {s.like_count ?? 0} · 💬 {s.comment_count ?? 0}{#if s.follower_count} · 🔔 {s.follower_count}{/if}</div>
+          <div class="smeta">{s.card_count} Karten · ❤️ {s.like_count ?? 0} · 💬 {s.comment_count ?? 0}{#if s.follower_count}{' · '}🔔 {s.follower_count}{/if}</div>
           <div class="sauthor"><CountryFlag country={s.author_country} />{s.author_name ?? 'Sammler'}</div>
           {#if s.is_mine}<div class="sactions"><button class="del" onclick={() => del(s)}>Löschen</button></div>{/if}
         </div>
@@ -193,7 +193,7 @@
   </div>
 
   {#if sc.description}<p class="col-desc">{sc.description}</p>{/if}
-  <div class="col-stats">{cards.length} Karten · 💬 {sc.comment_count ?? 0} · 🔔 {sc.follower_count ?? 0} Follower{#if sc.created_at} · erstellt {new Date(sc.created_at).toLocaleDateString('de-DE')}{/if}</div>
+  <div class="col-stats">{cards.length} Karten · 💬 {sc.comment_count ?? 0} · 🔔 {sc.follower_count ?? 0} Follower{#if sc.created_at}{' · '}erstellt {new Date(sc.created_at).toLocaleDateString('de-DE')}{/if}</div>
 
   <div class="col-actions">
     {#each REACTIONS as r (r.kind)}

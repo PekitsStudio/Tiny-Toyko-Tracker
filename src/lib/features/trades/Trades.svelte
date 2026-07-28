@@ -63,7 +63,7 @@
           <div class="tname">{t.card_name}</div>
           <div class="tsub">
             {t.i_am_proposer ? 'Kauf von' : 'Verkauf an'} <b>{partnerName(t)}</b>
-            {#if t.price != null} · {fmt(t.price, t.currency ?? 'EUR')}{/if}
+            {#if t.price != null}{' · '}{fmt(t.price, t.currency ?? 'EUR')}{/if}
             · <span class="badge {t.status}">{LABEL[t.status]}</span>
           </div>
           {#if t.message}<div class="tmsg">„{t.message}"</div>{/if}

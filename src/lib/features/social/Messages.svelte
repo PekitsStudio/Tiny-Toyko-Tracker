@@ -74,7 +74,7 @@
       {#if searching}<div class="muted small">suche…</div>{/if}
       {#if results.length}
         <div class="results">
-          {#each results as u (u.user_id)}<button onclick={() => pick(u)}>{u.name ?? 'Sammler'}{#if u.country} · {u.country}{/if}</button>{/each}
+          {#each results as u (u.user_id)}<button onclick={() => pick(u)}>{u.name ?? 'Sammler'}{#if u.country}{' · '}{u.country}{/if}</button>{/each}
         </div>
       {/if}
     </div>

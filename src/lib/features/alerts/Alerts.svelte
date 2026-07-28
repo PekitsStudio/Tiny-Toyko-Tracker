@@ -27,7 +27,7 @@
 </script>
 
 <div class="head">
-  <div><h2>Preisalarme</h2><div class="muted">{alerts.length} Alarme{#if checkMsg} · {checkMsg}{/if}</div></div>
+  <div><h2>Preisalarme</h2><div class="muted">{alerts.length} Alarme{#if checkMsg}{' · '}{checkMsg}{/if}</div></div>
   <button class="primary" onclick={check} disabled={checking || loading || !alerts.length}>{checking ? '…' : 'Preise prüfen'}</button>
 </div>
 
@@ -40,7 +40,7 @@
       <div class="info">
         <div class="n">{a.name} <span class="g">{GAME_LABEL[a.game] ?? a.game}</span></div>
         <div class="cond">{a.direction === 'below' ? '≤' : '≥'} {fmt(a.target_price, a.currency ?? 'EUR')}
-          {#if a.last_price != null} · zuletzt {fmt(a.last_price, a.currency ?? 'EUR')}{/if}
+          {#if a.last_price != null}{' · '}zuletzt {fmt(a.last_price, a.currency ?? 'EUR')}{/if}
           {#if a.triggered}<span class="badge">ausgelöst 🔔</span>{/if}
         </div>
       </div>

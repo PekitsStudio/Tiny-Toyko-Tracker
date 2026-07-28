@@ -147,14 +147,14 @@
           <div>
             <div class="ml up">▲ Gewinner</div>
             {#each gainers as m (m.id)}
-              <div class="mrow">{#if m.image_url}<img src={m.image_url} alt="" loading="lazy" />{:else}<span class="mph"></span>{/if}<span class="mn">{m.name}</span><span class="mc up">+{fmt(m.change, m.currency ?? 'EUR')}<small>{m.pct.toFixed(0)}%</small></span></div>
+              <div class="mrow">{#if m.image_url}<img src={m.image_url} alt="" loading="lazy" />{:else}<span class="mph"></span>{/if}<span class="mn" title={m.name}>{m.name}</span><span class="mc up">+{fmt(m.change, m.currency ?? 'EUR')}<small>{m.pct.toFixed(0)}%</small></span></div>
             {/each}
             {#if !gainers.length}<div class="muted small">keine</div>{/if}
           </div>
           <div>
             <div class="ml down">▼ Verlierer</div>
             {#each losers as m (m.id)}
-              <div class="mrow">{#if m.image_url}<img src={m.image_url} alt="" loading="lazy" />{:else}<span class="mph"></span>{/if}<span class="mn">{m.name}</span><span class="mc down">{fmt(m.change, m.currency ?? 'EUR')}<small>{m.pct.toFixed(0)}%</small></span></div>
+              <div class="mrow">{#if m.image_url}<img src={m.image_url} alt="" loading="lazy" />{:else}<span class="mph"></span>{/if}<span class="mn" title={m.name}>{m.name}</span><span class="mc down">{fmt(m.change, m.currency ?? 'EUR')}<small>{m.pct.toFixed(0)}%</small></span></div>
             {/each}
             {#if !losers.length}<div class="muted small">keine</div>{/if}
           </div>
@@ -166,7 +166,7 @@
       <section class="w">
         <div class="wh"><h2>🔔 Ausgelöste Alarme</h2><button class="link" onclick={() => nav.go('sammlung')}>alle →</button></div>
         {#each hitAlerts.slice(0, 6) as a (a.id)}
-          <div class="frow"><span class="fico">🔔</span><span class="ft"><b>{a.name}</b><span class="muted"> · {a.direction === 'below' ? '≤' : '≥'} {fmt(a.target_price, a.currency ?? 'EUR')}{#if a.last_price != null} · jetzt {fmt(a.last_price, a.currency ?? 'EUR')}{/if}</span></span></div>
+          <div class="frow"><span class="fico">🔔</span><span class="ft"><b>{a.name}</b><span class="muted"> · {a.direction === 'below' ? '≤' : '≥'} {fmt(a.target_price, a.currency ?? 'EUR')}{#if a.last_price != null}{' · '}jetzt {fmt(a.last_price, a.currency ?? 'EUR')}{/if}</span></span></div>
         {/each}
       </section>
     {/if}
@@ -201,7 +201,7 @@
           {#each highlights as sh (sh.id)}
             <button class="hcard" onclick={() => nav.go('community')}>
               {#if sh.cover}<img src={sh.cover} alt="" loading="lazy" />{:else}<div class="noimg">⛩</div>{/if}
-              <div class="hn">{sh.name}</div>
+              <div class="hn" title={sh.name}>{sh.name}</div>
               <div class="hm">von {sh.author_name ?? 'Sammler'} · ♥ {sh.like_count ?? 0}</div>
             </button>
           {/each}

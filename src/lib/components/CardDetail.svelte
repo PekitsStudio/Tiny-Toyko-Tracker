@@ -126,7 +126,7 @@
         <div class="head">
           <span class="tag {c.game}">{GAME_LABEL[c.game] ?? c.game}</span>
           <h2>{c.name}</h2>
-          <div class="line"><Flag lang={c.lang} />{c.setName ?? ''}{#if c.number} · {c.number}{/if}</div>
+          <div class="line"><Flag lang={c.lang} />{c.setName ?? ''}{#if c.number}{' · '}{c.number}{/if}</div>
           {#if c.rarity}<div class="muted">{c.rarity}</div>{/if}
           <div class="prices">
             {#if c.price != null}<div class="big-price">{fmt(c.price, c.currency ?? 'EUR')}</div>{/if}

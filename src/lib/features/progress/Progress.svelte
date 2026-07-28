@@ -87,7 +87,7 @@
       <div class="xpbar"><span class="xpfill" style="width:{Math.max(3, (p.into / p.need) * 100).toFixed(0)}%"></span></div>
       <div class="chips">
         <span class="chip cp">🪙 {cp} CP</span>
-        <span class="chip fire">🔥 Streak {p.streak}{#if p.bestStreak > p.streak} · Best {p.bestStreak}{/if}</span>
+        <span class="chip fire">🔥 Streak {p.streak}{#if p.bestStreak > p.streak}{' · '}Best {p.bestStreak}{/if}</span>
         <span class="chip">🏅 {p.earned}/{p.total} Erfolge</span>
       </div>
     </div>
@@ -174,7 +174,7 @@
           <div class="ainfo">
             <div class="aname">{a.name}{#if a.reached >= 0 && a.tierLabels[a.reached]} <span class="atier">{a.tierLabels[a.reached]}</span>{/if}</div>
             <div class="abar"><span class="afill" class:full={a.done} style="width:{pctOf(a).toFixed(0)}%"></span></div>
-            <div class="aval">{valLabel(a)}{#if a.claimable} · <span class="claimhint">+{a.cp} CP</span>{/if}</div>
+            <div class="aval">{valLabel(a)}{#if a.claimable}{' · '}<span class="claimhint">+{a.cp} CP</span>{/if}</div>
           </div>
           {#if a.done}<div class="acheck">✓</div>{/if}
         </button>
@@ -189,7 +189,7 @@
     <div class="odlg rar-{sel.rarity === 'locked' ? 'bronze' : sel.rarity}" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()}>
       <button class="ox" onclick={() => (sel = null)} aria-label="Schließen">✕</button>
       <div class="oic rar-{sel.rarity === 'locked' ? 'bronze' : sel.rarity}">{sel.icon}</div>
-      <div class="ocat">{sel.cat}{#if sel.reached >= 0 && sel.tierLabels[sel.reached]} · {sel.tierLabels[sel.reached]}{/if}</div>
+      <div class="ocat">{sel.cat}{#if sel.reached >= 0 && sel.tierLabels[sel.reached]}{' · '}{sel.tierLabels[sel.reached]}{/if}</div>
       <h3 class="oname">{sel.name}</h3>
       <p class="odesc">{sel.desc}</p>
       <div class="obar"><span class="ofill" style="width:{pctOf(sel).toFixed(0)}%"></span></div>

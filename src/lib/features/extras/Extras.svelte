@@ -194,7 +194,7 @@
         {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditSealed(x)} />{:else}<div class="boxph">📦</div>{/if}
         <div class="meta">
           <div class="name">{x.name}</div>
-          <div class="set">{x.product_type}{#if x.set_name} · {x.set_name}{/if}{#if x.quantity > 1} · ×{x.quantity}{/if}</div>
+          <div class="set">{x.product_type}{#if x.set_name}{' · '}{x.set_name}{/if}{#if x.quantity > 1}{' · '}×{x.quantity}{/if}</div>
           <div class="price">{x.current_value != null ? fmt(x.current_value, x.currency ?? 'EUR') : 'kein Preis'}</div>
           {#if x.purchase_price != null}
             <div class="subline"><span class="ek">EK {fmt(x.purchase_price, x.currency ?? 'EUR')}</span>{#if x.current_value != null}<span class="pl" class:pos={(x.current_value - x.purchase_price) >= 0}>{(x.current_value - x.purchase_price) >= 0 ? '+' : ''}{fmt((x.current_value - x.purchase_price) * (x.quantity ?? 1), x.currency ?? 'EUR')}</span>{/if}</div>
@@ -220,7 +220,7 @@
         {#if x.image_url}<img src={x.image_url} alt="" loading="lazy" style="cursor:zoom-in" onclick={() => startEditGraded(x)} />{:else}<div class="boxph">🎴</div>{/if}
         <div class="meta">
           <div class="name">{x.name}</div>
-          <div class="set">{x.set_name ?? ''}{#if x.number} · {x.number}{/if}{#if x.cert} · Cert {x.cert}{/if}</div>
+          <div class="set">{x.set_name ?? ''}{#if x.number}{' · '}{x.number}{/if}{#if x.cert}{' · '}Cert {x.cert}{/if}</div>
           <div class="price">{x.value != null ? fmt(x.value, x.currency ?? 'USD') : 'kein Preis'}</div>
           {#if x.purchase_price != null}
             <div class="subline"><span class="ek">EK {fmt(x.purchase_price, x.currency ?? 'USD')}</span>{#if x.value != null}<span class="pl" class:pos={(x.value - x.purchase_price) >= 0}>{(x.value - x.purchase_price) >= 0 ? '+' : ''}{fmt(x.value - x.purchase_price, x.currency ?? 'USD')}</span>{/if}</div>

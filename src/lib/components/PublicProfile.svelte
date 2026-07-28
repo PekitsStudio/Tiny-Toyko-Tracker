@@ -125,7 +125,7 @@
                 <div class="fbhead">
                   <span class="fbstars">{stars(f.stars)}</span>
                   <span class="fbrec">{f.recommend ? '👍' : '👎'}</span>
-                  <span class="fbwho">{f.rater_name ?? 'Sammler'}{#if f.card_name} · {f.card_name}{/if}</span>
+                  <span class="fbwho">{f.rater_name ?? 'Sammler'}{#if f.card_name}{' · '}{f.card_name}{/if}</span>
                 </div>
                 {#if f.comment}<div class="fbcomment">„{f.comment}"</div>{/if}
               </div>
@@ -158,7 +158,7 @@
               <div class="fb">
                 <div class="fbhead">
                   <span class="fbstars">{stars(r.stars)}</span>
-                  <span class="fbwho">{r.rater_name ?? 'Sammler'}{#if r.is_mine} · du{/if}</span>
+                  <span class="fbwho">{r.rater_name ?? 'Sammler'}{#if r.is_mine}{' · '}du{/if}</span>
                 </div>
                 {#if r.comment}<div class="fbcomment">„{r.comment}"</div>{/if}
               </div>

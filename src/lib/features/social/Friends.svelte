@@ -51,7 +51,7 @@
 {#if results.length}
   <div class="results">
     {#each results as u (u.user_id)}
-      <div class="rrow"><span>{u.name ?? 'Sammler'}{#if u.country} · {u.country}{/if}</span><button class="primary" onclick={() => add(u)}>+ Freund</button></div>
+      <div class="rrow"><span>{u.name ?? 'Sammler'}{#if u.country}{' · '}{u.country}{/if}</span><button class="primary" onclick={() => add(u)}>+ Freund</button></div>
     {/each}
   </div>
 {/if}
@@ -71,7 +71,7 @@
 {#if !accepted.length && !loading}<div class="muted">Noch keine Freunde.</div>{/if}
 <div class="list">
   {#each accepted as f (f.id)}
-    <div class="frow"><span class="fn">{f.name ?? 'Sammler'}{#if f.country} · {f.country}{/if}</span><div class="fa"><button onclick={() => message(f)}>Nachricht</button><button class="danger" onclick={() => remove(f)}>Entfernen</button></div></div>
+    <div class="frow"><span class="fn">{f.name ?? 'Sammler'}{#if f.country}{' · '}{f.country}{/if}</span><div class="fa"><button onclick={() => message(f)}>Nachricht</button><button class="danger" onclick={() => remove(f)}>Entfernen</button></div></div>
   {/each}
 </div>
 

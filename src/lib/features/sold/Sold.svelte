@@ -77,7 +77,7 @@
       <div class="meta">
         <div class="name">{c.name}</div>
         <div class="set"><Flag lang={c.language} />{c.sub ?? c.set_name ?? ''}</div>
-        <div class="price">{c.sold_price != null ? fmt(c.sold_price, c.currency ?? 'EUR') : '—'}{#if c.quantity > 1} · ×{c.quantity}{/if}</div>
+        <div class="price">{c.sold_price != null ? fmt(c.sold_price, c.currency ?? 'EUR') : '—'}{#if c.quantity > 1}{' · '}×{c.quantity}{/if}</div>
         {#if c.purchase_price != null && c.sold_price != null}
           <div class="pl" class:pos={(c.sold_price - c.purchase_price) >= 0}>
             {(c.sold_price - c.purchase_price) >= 0 ? '+' : ''}{fmt((c.sold_price - c.purchase_price) * (c.quantity ?? 1), c.currency ?? 'EUR')}
