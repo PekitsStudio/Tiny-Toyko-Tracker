@@ -117,20 +117,13 @@ export async function getShop(): Promise<ShopData> {
 	return { cp, owned, avatarUrl, collections };
 }
 
-// Avatar mit CP freischalten. Gibt den neuen CP-Stand zurueck.
+// Avatar mit CP freischalten (atomar via RPC). Gibt den neuen CP-Stand zurueck.
 export async function buyAvatar(path: string, price: number): Promise<number> {
 	const uid = await uidOrNull();
 	if (!uid) throw new Error('Nicht eingeloggt');
-	const us = await supabase().from('user_settings').select('cp, owned_avatars').eq('user_id', uid).maybeSingle();
-	let cp = (us.data?.cp as number | null) ?? 0;
-	const owned = (us.data?.owned_avatars as string[] | null) ?? [];
-	if (owned.includes(path)) return cp;
-	if (cp < price) throw new Error('Nicht genug Collector Points.');
-	cp -= price;
-	const next = [...owned, path];
-	const { error } = await supabase().from('user_settings').upsert({ user_id: uid, cp, owned_avatars: next }, { onConflict: 'user_id' });
+	const { data, error } = await supabase().rpc('buy_avatar', { p_path: path, p_price: price });
 	if (error) throw new Error(error.message);
-	return cp;
+	return (data as number | null) ?? 0;
 }
 
 // Freigeschalteten Avatar ausruesten (setzt avatar_url).

@@ -19,18 +19,11 @@ async function uidOrNull(): Promise<string | null> {
 	return data.user?.id ?? null;
 }
 
-// --- Login-Streak: einmal pro Tag hochzaehlen ---
+// --- Login-Streak: einmal pro Tag hochzaehlen (atomar server-seitig) ---
 export async function touchLogin(): Promise<void> {
 	const id = await uidOrNull();
 	if (!id) return;
-	const { data } = await supabase().from('user_settings').select('last_login, streak, best_streak').eq('user_id', id).maybeSingle();
-	const today = new Date().toISOString().slice(0, 10);
-	const last = (data?.last_login as string | null) ?? null;
-	if (last === today) return;
-	const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-	const streak = last === yesterday ? (data?.streak ?? 0) + 1 : 1;
-	const best = Math.max(data?.best_streak ?? 0, streak);
-	await supabase().from('user_settings').upsert({ user_id: id, last_login: today, streak, best_streak: best }, { onConflict: 'user_id' });
+	await supabase().rpc('touch_login');
 }
 
 export const COLLECTOR_PATHS: { key: string; label: string; icon: string }[] = [
@@ -195,20 +188,13 @@ export async function getProgress(): Promise<Progress> {
 }
 
 // Belohnung eines erreichten Achievements einloesen (einmalig pro Stufe).
+// Atomar via RPC: prueft Doppel-Einloesung + rechnet CP server-seitig.
 export async function claimAchievement(claimId: string, cp: number): Promise<number> {
 	const id = await uidOrNull();
 	if (!id) throw new Error('Nicht eingeloggt');
-	const us = await supabase().from('user_settings').select('cp, claimed_quests').eq('user_id', id).maybeSingle();
-	let bal = us.data?.cp ?? 0;
-	let claimed = (us.data?.claimed_quests as string[] | null) ?? [];
-	if (claimed.includes(claimId)) return bal;
-	bal += cp;
-	// Achievement-Eintraege bleiben dauerhaft, Quest-Eintraege werden begrenzt.
-	claimed = [...claimed, claimId];
-	claimed = [...claimed.filter((x) => x.startsWith('ach:')), ...claimed.filter((x) => !x.startsWith('ach:')).slice(-80)];
-	const { error } = await supabase().from('user_settings').upsert({ user_id: id, cp: bal, claimed_quests: claimed }, { onConflict: 'user_id' });
+	const { data, error } = await supabase().rpc('claim_reward', { p_claim_id: claimId, p_cp: cp });
 	if (error) throw new Error(error.message);
-	return bal;
+	return (data as number | null) ?? 0;
 }
 
 // Nur Level (guenstig) – fuer Dashboard etc.

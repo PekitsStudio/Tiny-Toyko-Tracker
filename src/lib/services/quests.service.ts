@@ -92,17 +92,10 @@ export async function getQuests(): Promise<QuestData> {
 export async function claimQuest(q: Quest): Promise<number> {
 	const uid = await uidOrNull();
 	if (!uid) throw new Error('Nicht eingeloggt');
-	const us = await supabase().from('user_settings').select('cp, claimed_quests').eq('user_id', uid).maybeSingle();
-	let cp = us.data?.cp ?? 0;
-	let claimed = (us.data?.claimed_quests as string[] | null) ?? [];
-	const cid = `${q.periodId}:${q.id}`;
-	if (claimed.includes(cid)) return cp;
 	if (q.progress < q.target) throw new Error('Quest noch nicht abgeschlossen.');
-	cp += q.cp;
-	// Achievement-Eintraege (ach:*) dauerhaft behalten, Quest-Eintraege begrenzen.
-	claimed = [...claimed, cid];
-	claimed = [...claimed.filter((x) => x.startsWith('ach:')), ...claimed.filter((x) => !x.startsWith('ach:')).slice(-80)];
-	const { error } = await supabase().from('user_settings').upsert({ user_id: uid, cp, claimed_quests: claimed }, { onConflict: 'user_id' });
+	// Atomar server-seitig: prueft Doppel-Einloesung + bucht CP.
+	const cid = `${q.periodId}:${q.id}`;
+	const { data, error } = await supabase().rpc('claim_reward', { p_claim_id: cid, p_cp: q.cp });
 	if (error) throw new Error(error.message);
-	return cp;
+	return (data as number | null) ?? 0;
 }
